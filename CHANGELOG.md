@@ -4,6 +4,12 @@ The most important changes in each release. The Play Store notes for a release
 are in `fastlane/metadata/android/en-US/changelogs/<versionCode>.txt`.
 Dates are when the build was uploaded to Play.
 
+## Fork — unreleased
+
+- Linux touch input forwards simultaneous contacts with distinct IDs, batched
+  frames and cancellation when Android cancels a gesture or its surface closes.
+- Dragging a widget previews neighbour movement while preserving widget sizes.
+
 ## 0.7.0 (versionCode 12) – 2026-10-13
 
 - The style lives in `~/.config/omalauncher/style/style.toml`, which you or an agent can edit

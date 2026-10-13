@@ -12,11 +12,13 @@ pkg install -y curl && curl -fL https://raw.githubusercontent.com/amarionfred/st
 ```
 
 It works from any folder, including Downloads. No Java, Gradle, or source download is needed.
-The script downloads the APK, checks its checksum, configures Termux, and requests Android installation.
+The script checks the APK, configures Termux, saves `strata.apk` in the phone's
+Downloads folder, and tries to open Android's installer.
 
-1. Allow installs from Termux if asked, then tap **Install** or **Update**, followed by **Open**. If **Open with** appears, choose **Package installer**.
-2. In **Strata → Setup**, tap **Grant command permission** and allow it.
-3. Tap **Choose default home** and select **Strata**.
+1. Allow Termux file access if asked, so the script can save the APK in Downloads.
+2. If no installation window appears, open **File Manager → Internal storage → Download → strata.apk**. Allow installation from the app opening the APK if asked, then tap **Install** or **Update**, followed by **Open**. Choose **Package installer** if prompted.
+3. In **Strata → Setup**, tap **Grant command permission** and allow it.
+4. Tap **Choose default home** and select **Strata**.
 
 Run the same command to install, update, or retry. A verified download is reused
 when it matches the latest release. If a **Save file in ~/downloads/** or

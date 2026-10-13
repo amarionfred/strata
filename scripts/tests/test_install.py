@@ -54,22 +54,21 @@ class InstallTests(unittest.TestCase):
     def downloads(self):
         return (self.directory / "downloads").read_text().splitlines()
 
-    def dispatch_installer(self, apk, am_status=0, chooser_status=0):
+    def dispatch_installer(self, apk, am_status=0):
         command = self.directory / "prefix/bin/am"
         command.parent.mkdir(parents=True, exist_ok=True)
         command.write_text('#!/bin/sh\nprintf "%s\\n" "$@"\nexit ' + str(am_status) + '\n')
         command.chmod(0o700)
         return self.shell('''
             strata_dispatch_fixture="$1"
-            strata_chooser_status="$3"
             PREFIX="$strata_dispatch_fixture/prefix"
             termux-open() {
                 printf '%s\\n' "$@" > "$strata_dispatch_fixture/chooser"
-                return "$strata_chooser_status"
+                fail 'A generic file viewer must not be opened.'
             }
             open_installer "$2" "$strata_dispatch_fixture/installer.log"
             printf INSTALL_REQUEST_SENT
-        ''', self.directory, apk, chooser_status)
+        ''', self.directory, apk)
 
     def test_direct_install_uses_content_uri_and_read_grant_without_file_viewer(self):
         apk = self.directory / "Strata #100% ? café.apk"
@@ -86,24 +85,16 @@ class InstallTests(unittest.TestCase):
         self.assertEqual(unquote(urlsplit(uri).path), str(apk.resolve()))
         self.assertFalse((self.directory / "chooser").exists())
 
-    def test_direct_install_failure_keeps_diagnostics_and_opens_chooser(self):
+    def test_direct_install_failure_keeps_diagnostics_and_gives_downloads_path(self):
         apk = self.directory / "strata.apk"
         apk.write_bytes(b"APK test fixture")
         result = self.dispatch_installer(apk, am_status=1)
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("could not open the installer directly", result.stderr)
         self.assertIn("android.intent.action.INSTALL_PACKAGE", result.stderr)
-        self.assertEqual((self.directory / "chooser").read_text().splitlines(), [
-            "--chooser", "--view", "--content-type", "application/vnd.android.package-archive", str(apk)])
+        self.assertFalse((self.directory / "chooser").exists())
+        self.assertIn("Download → strata.apk", result.stdout)
         self.assertIn("INSTALL_REQUEST_SENT", result.stdout)
-
-    def test_both_install_routes_failing_stops_and_reports_log(self):
-        apk = self.directory / "strata.apk"
-        apk.write_bytes(b"APK test fixture")
-        result = self.dispatch_installer(apk, am_status=1, chooser_status=1)
-        self.assertNotEqual(result.returncode, 0)
-        self.assertNotIn("INSTALL_REQUEST_SENT", result.stdout)
-        self.assertIn(str(self.directory / "installer.log"), result.stderr)
 
     def test_missing_apk_does_not_open_installer_or_file_viewer(self):
         result = self.dispatch_installer(self.directory / "missing.apk")
@@ -111,6 +102,106 @@ class InstallTests(unittest.TestCase):
         self.assertFalse((self.directory / "installer.log").exists())
         self.assertFalse((self.directory / "chooser").exists())
         self.assertNotIn("INSTALL_REQUEST_SENT", result.stdout)
+
+    def test_existing_storage_access_does_not_request_permission_or_rebuild_links(self):
+        shared = self.directory / "shared"
+        shared.mkdir()
+        storage = self.directory / "storage"
+        storage.mkdir()
+        custom = storage / "keep.txt"
+        custom.write_text("my file")
+        result = self.shell('''
+            termux-setup-storage() { fail 'Storage setup should not run.'; }
+            connect_storage "$1" "$2"
+        ''', self.directory, shared)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(custom.read_text(), "my file")
+
+    def test_first_storage_request_waits_for_access(self):
+        shared = self.directory / "shared"
+        result = self.shell('''
+            strata_test_shared="$2"
+            termux-setup-storage() { printf STORAGE_REQUESTED; }
+            sleep() { mkdir -p -- "$strata_test_shared"; }
+            connect_storage "$1" "$2"
+        ''', self.directory, shared)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("STORAGE_REQUESTED", result.stdout)
+        self.assertTrue(shared.is_dir())
+
+    def test_denied_storage_does_not_rebuild_existing_storage_or_continue(self):
+        storage = self.directory / "storage"
+        storage.mkdir()
+        custom = storage / "keep.txt"
+        custom.write_text("my file")
+        result = self.shell('''
+            termux-setup-storage() { fail 'Storage setup should not run.'; }
+            wait_for_storage() { return 1; }
+            connect_storage "$1" "$2"
+            printf SHOULD_NOT_CONTINUE
+        ''', self.directory, self.directory / "unavailable")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("File access is still unavailable", result.stderr)
+        self.assertNotIn("SHOULD_NOT_CONTINUE", result.stdout)
+        self.assertEqual(custom.read_text(), "my file")
+
+    def export_apk(self, manifest=None, setup=""):
+        apk = self.directory / "cached.apk"
+        apk.write_bytes(b"published APK")
+        checksum = self.directory / "SHA256SUMS"
+        checksum.write_text(manifest if manifest is not None else
+                            hashlib.sha256(apk.read_bytes()).hexdigest() + "  strata.apk\n")
+        return self.shell('trap cleanup EXIT; ' + setup +
+                          'save_downloads_apk "$1" "$2" "$3"; printf READY_TO_OPEN',
+                          apk, checksum, self.directory / "Download")
+
+    def test_downloads_copy_is_verified_and_replaces_only_the_apk(self):
+        downloads = self.directory / "Download"
+        downloads.mkdir()
+        target = downloads / "strata.apk"
+        target.write_bytes(b"old APK")
+        other = downloads / "keep.txt"
+        other.write_text("my file")
+        result = self.export_apk()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(target.read_bytes(), b"published APK")
+        self.assertEqual(other.read_text(), "my file")
+        self.assertEqual(set(downloads.iterdir()), {target, other})
+        self.assertIn("Saved and verified", result.stdout)
+
+    def test_invalid_downloads_copy_preserves_old_apk_and_removes_partial_file(self):
+        downloads = self.directory / "Download"
+        downloads.mkdir()
+        target = downloads / "strata.apk"
+        target.write_bytes(b"old APK")
+        result = self.export_apk(manifest="0" * 64 + "  strata.apk\n")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(target.read_bytes(), b"old APK")
+        self.assertEqual(list(downloads.iterdir()), [target])
+        self.assertNotIn("READY_TO_OPEN", result.stdout)
+
+    def test_failed_downloads_copy_preserves_old_apk_and_removes_partial_file(self):
+        downloads = self.directory / "Download"
+        downloads.mkdir()
+        target = downloads / "strata.apk"
+        target.write_bytes(b"old APK")
+        result = self.export_apk(setup='cp() { printf partial > "$3"; return 1; }; ')
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("Could not copy the APK", result.stderr)
+        self.assertEqual(target.read_bytes(), b"old APK")
+        self.assertEqual(list(downloads.iterdir()), [target])
+        self.assertNotIn("READY_TO_OPEN", result.stdout)
+
+    def test_downloads_folder_named_strata_apk_is_preserved(self):
+        target = self.directory / "Download/strata.apk"
+        target.mkdir(parents=True)
+        custom = target / "keep.txt"
+        custom.write_text("my file")
+        result = self.export_apk()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(list(target.iterdir()), [custom])
+        self.assertEqual(custom.read_text(), "my file")
+        self.assertNotIn("READY_TO_OPEN", result.stdout)
 
     def test_verified_cached_apk_is_reused_after_checking_current_release(self):
         result = self.prepare_release(cached=b"published APK")

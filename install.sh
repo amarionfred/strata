@@ -4,11 +4,13 @@
 strata_repo=https://github.com/amarionfred/strata
 strata_stage=
 strata_config_tmp=
+strata_export_tmp=
 
 fail() { printf '\nStrata: %s\n' "$*" >&2; exit 1; }
 cleanup() {
     [[ -z "$strata_stage" ]] || rm -rf -- "$strata_stage"
     [[ -z "$strata_config_tmp" ]] || rm -f -- "$strata_config_tmp"
+    [[ -z "$strata_export_tmp" ]] || rm -f -- "$strata_export_tmp"
 }
 
 check_phone() {
@@ -28,7 +30,7 @@ ensure_tools() {
     command -v curl >/dev/null || packages+=(curl)
     command -v sha256sum >/dev/null || packages+=(coreutils)
     command -v awk >/dev/null || packages+=(gawk)
-    if ! command -v termux-open >/dev/null || ! command -v termux-reload-settings >/dev/null; then
+    if ! command -v termux-setup-storage >/dev/null || ! command -v termux-reload-settings >/dev/null; then
         packages+=(termux-tools)
     fi
     [[ -x "$PREFIX/bin/am" ]] || packages+=(termux-am)
@@ -134,6 +136,43 @@ apk_uri() {
     printf '%s\n' "$uri"
 }
 
+wait_for_storage() {
+    local shared="$1" attempt
+    for ((attempt = 0; attempt < 120; attempt++)); do
+        [[ -d "$shared" && -w "$shared" ]] && return 0
+        sleep 1
+    done
+    return 1
+}
+
+connect_storage() {
+    local strata_home="$1" shared="$2"
+    [[ -d "$shared" && -w "$shared" ]] && return
+    printf '\nAllow Termux to access files so the APK can be saved in your phone\047s Downloads folder.\n'
+    if [[ ! -e "$strata_home/storage" && ! -L "$strata_home/storage" ]]; then
+        termux-setup-storage || fail 'Could not request file access. Allow file access for Termux in Android settings, then run the same installation command again.'
+    else
+        # Do not rebuild an existing ~/storage directory or remove its contents.
+        printf 'In Android Settings → Apps → Termux → Permissions, allow file access, then return here.\n'
+    fi
+    printf 'Waiting for file access…\n'
+    wait_for_storage "$shared" || fail 'File access is still unavailable. Allow file access for Termux in Android settings, then run the same installation command again.'
+}
+
+save_downloads_apk() {
+    local apk="$1" manifest="$2" downloads="$3" target
+    target="$downloads/strata.apk"
+    mkdir -p -- "$downloads" || fail 'Cannot access the phone Downloads folder. Check Termux file permissions.'
+    [[ ! -d "$target" ]] || fail 'Downloads/strata.apk is a folder. Rename that folder and run the same installation command again.'
+    strata_export_tmp=$(mktemp "$downloads/.strata.XXXXXX") \
+        || fail 'Cannot write to Downloads. Check Termux file permissions and free space.'
+    cp -- "$apk" "$strata_export_tmp" || fail 'Could not copy the APK to Downloads. Check file permissions and free space.'
+    verify_apk "$manifest" "$strata_export_tmp"
+    mv -fT -- "$strata_export_tmp" "$target" || fail 'Could not save Downloads/strata.apk.'
+    strata_export_tmp=
+    printf '\nSaved and verified: %s\n' "$target"
+}
+
 open_installer() {
     local apk="$1" log="$2" uri
     [[ -f "$apk" && -r "$apk" ]] || fail 'The downloaded APK is missing or unreadable. Run the same installation command again.'
@@ -145,14 +184,12 @@ open_installer() {
         -a android.intent.action.INSTALL_PACKAGE \
         -t application/vnd.android.package-archive \
         -d "$uri" --grant-read-uri-permission > "$log" 2>&1; then
+        printf '\nInstallation requested. If no window appears, open File Manager → Internal storage → Download → strata.apk.\n'
         return
     fi
     printf '\nAndroid could not open the installer directly:\n' >&2
     cat -- "$log" >&2
-    printf '\nOpening the app chooser instead. Choose Package installer.\n'
-    printf 'If a Save file or termux-file-editor dialog appears, close it; the APK does not need an editor.\n'
-    termux-open --chooser --view --content-type application/vnd.android.package-archive "$apk" \
-        || fail "Could not open Android installation. Details saved in $log."
+    printf '\nOpen File Manager → Internal storage → Download → strata.apk to install.\n'
 }
 
 main() {
@@ -160,7 +197,7 @@ main() {
     umask 077
     check_phone
     ensure_tools
-    local cache="$HOME/.cache/strata" tag apk
+    local cache="$HOME/.cache/strata" shared="/storage/emulated/$((UID / 100000))" tag apk
     mkdir -p -- "$cache"
     strata_stage=$(mktemp -d "$cache/download.XXXXXX")
     trap cleanup EXIT
@@ -172,12 +209,13 @@ main() {
     apk="$cache/strata.apk"
     printf '\n2/3 Connecting Termux…\n'
     connect_termux "$HOME"
-    printf '\n3/3 Opening Android installation…\n'
-    printf 'Allow installs from Termux if asked, then tap Install or Update.\n'
-    printf 'If an Open with chooser appears, select Package installer.\n'
+    printf '\n3/3 Preparing Android installation…\n'
+    connect_storage "$HOME" "$shared"
+    save_downloads_apk "$apk" "$strata_stage/SHA256SUMS" "$shared/Download"
+    printf '\nTap Install or Update. Allow installation from the app opening the APK if Android asks.\n'
+    printf 'If no installer appears, open your phone\047s File Manager → Internal storage → Download → strata.apk.\n'
     printf 'After installation, open Strata → Setup → Grant command permission → Allow.\n'
     printf 'For your first installation, tap Choose default home and select Strata.\n'
-    printf '\nIf installation closes, return to Termux and run the same installation command again.\n'
     open_installer "$apk" "$cache/installer.log"
 }
 

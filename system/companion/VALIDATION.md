@@ -2,13 +2,16 @@
 
 Checked on 2026-10-13.
 
-The Termux installer has 17 passing host tests for first installation, reusing a
+The Termux installer has 23 passing host tests for first installation, reusing a
 verified download on retry, replacing an older APK, checksum failures, failed
 downloads, release selection, preserving existing files and configuration,
-installation request arguments, URI encoding, and fallback/error handling. Android
+installation request arguments, URI encoding, storage access, and verified copies
+to Downloads. Failed copies preserve an existing APK and remove partial files. Android
 commands are stubbed in these tests; they do not confirm a phone installation.
 The live download and checksum steps were checked against the published 0.5.0 APK.
-Android's installation and permission dialogs still need phone testing.
+The Tecno screenshots confirm that download verification completed, but Android's
+installation window did not appear after the direct request. The Downloads fallback
+and installation/permission dialogs still need phone testing.
 
 | Check | Result |
 | --- | --- |
@@ -39,8 +42,8 @@ APK SHA256:
 26e959b015d0af831dc6e45cc471a375465d27013836fda387c59d4c77686b8e
 ```
 
-The Tecno KL4 is still stock and unrooted. No phone installation or UI testing
-was performed. Root-manager grants/denials, module installation and startup,
+The Tecno KL4 is still stock and unrooted. No successful phone installation has
+been confirmed. Root-manager grants/denials, module installation and startup,
 SELinux compatibility, interactive terminals, foreground-service lifecycle, and
 normal home/theme/notification behavior still need physical device testing.
 The complete phone interface is unfinished.

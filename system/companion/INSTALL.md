@@ -7,12 +7,14 @@ pkg install -y curl && curl -fL https://raw.githubusercontent.com/amarionfred/st
 ```
 
 The script downloads the published APK, verifies it, enables the Termux connection,
-and requests Android installation. Existing Termux settings are kept; changed settings
+saves `strata.apk` in the phone's Downloads folder, and tries to open Android's
+installer. Existing Termux settings are kept; changed settings
 are backed up beside `termux.properties` as `termux.properties.strata-backup`.
 
-1. Allow installs from Termux if asked, then tap **Install** or **Update**, followed by **Open**. If **Open with** appears, choose **Package installer**.
-2. In **Strata → Setup**, tap **Grant command permission → Allow**.
-3. Tap **Choose default home** and select **Strata**.
+1. Allow Termux file access if asked, so the script can save the APK in Downloads.
+2. If no installation window appears, open **File Manager → Internal storage → Download → strata.apk**. Allow installation from the app opening the APK if asked, then tap **Install** or **Update**, followed by **Open**. Choose **Package installer** if prompted.
+3. In **Strata → Setup**, tap **Grant command permission → Allow**.
+4. Tap **Choose default home** and select **Strata**.
 
 No Java, Gradle, Git, or source compilation is required. Android 10+ is required.
 Run the same command to install, update, or retry. It reuses the downloaded APK
@@ -20,12 +22,12 @@ when its checksum matches the latest release. Existing app data is kept.
 
 ## If installation stops
 
-- No installer appeared, or you closed it: return to Termux and run the same installation command above. Choose **Package installer** in **Open with**.
-- A **Save file in ~/downloads/** dialog appeared: tap **Cancel**, return to Termux, and run the same installation command above. Choose **Package installer** when prompted.
-- A **termux-file-editor** error appeared: Termux tried to edit the APK. Tap **OK**, return to Termux, and run the same installation command above. The current script requests installation directly; no editor script is needed.
-- The script reports that Android could not open the installer directly: choose **Package installer** in the fallback chooser. The error is kept in `~/.cache/strata/installer.log`.
+- No installer appeared, or you closed it: after **Saved and verified** appears, open **File Manager → Internal storage → Download → strata.apk**. Returning to the Termux prompt does not mean the APK was installed.
+- A **Save file in ~/downloads/** or **termux-file-editor** dialog appeared: close it and run the command above to get the current script. When it reports **Saved and verified**, open the APK from your phone's File Manager. No editor script is needed.
+- File access is unavailable: allow file access under **Android Settings → Apps → Termux → Permissions**, then run the same command again. The script keeps an existing `~/storage` directory and its contents.
+- The script reports that Android could not open the installer directly: open **File Manager → Internal storage → Download → strata.apk**. The error is kept in `~/.cache/strata/installer.log`.
 - Download or checksum failed: check your connection and run the installation command again.
-- Android blocked installation: allow **Install unknown apps** for Termux, return to Termux, and run the same installation command above.
+- Android blocked installation: allow **Install unknown apps** for the app opening the APK, such as File Manager, then tap the APK again.
 - Terminal commands fail: in Strata's Setup tab, tap **Grant command permission**, then **Verify Termux connection**. Reopen Termux if needed.
 
 The script cannot accept Android's installation or permission dialogs for you.

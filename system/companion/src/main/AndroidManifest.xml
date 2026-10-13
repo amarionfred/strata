@@ -1,12 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools">
+    <uses-permission android:name="android.permission.SET_WALLPAPER" />
+    <!-- WallpaperManager.getWallpaperInfo requires this on Android 13 and below; the service query is enough on 14+. -->
+    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" android:maxSdkVersion="33" tools:ignore="QueryAllPackagesPermission" />
     <uses-permission android:name="com.termux.permission.RUN_COMMAND" />
+    <uses-permission android:name="android.permission.ACCESS_HIDDEN_PROFILES" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
     <queries>
+        <intent><action android:name="android.service.wallpaper.WallpaperService" /></intent>
         <package android:name="com.termux" />
         <package android:name="moe.shizuku.privileged.api" />
         <intent>
@@ -31,6 +36,12 @@
             </intent-filter>
         </activity>
         <receiver android:name=".CommandResultReceiver" android:exported="false" />
+        <activity android:name=".PinShortcutActivity" android:exported="false"
+            android:excludeFromRecents="true" android:noHistory="true" android:taskAffinity="">
+            <intent-filter>
+                <action android:name="android.content.pm.action.CONFIRM_PIN_SHORTCUT" />
+            </intent-filter>
+        </activity>
         <provider android:name="rikka.shizuku.ShizukuProvider"
             android:authorities="${applicationId}.shizuku" android:multiprocess="false"
             android:exported="true" android:enabled="true"

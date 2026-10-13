@@ -37,6 +37,15 @@ public final class MainActivity extends Activity {
     private String tab = "Home", lastAdminOutput = "Read the device state to check the connected service.";
     private boolean adminBusy;
     private SharedPreferences ui;
+    private AppCatalog catalog;
+    private LinearLayout appRows, appTabs;
+    private EditText appQuery;
+    private AppPolicy.Kind appTab = AppPolicy.Kind.PERSONAL;
+    private boolean wallpaperBusy;
+    private final Runnable renderInbox = () -> { if (!isDestroyed() && "Inbox".equals(tab)) render(); };
+    private final Runnable inboxChanged = () -> {
+        handler.removeCallbacks(renderInbox); handler.postDelayed(renderInbox, 200);
+    };
 
     @Override public void onCreate(Bundle saved) {
         super.onCreate(saved);
@@ -62,6 +71,7 @@ public final class MainActivity extends Activity {
         setContentView(root);
         admin = new AdminClient(this, () -> handler.post(this::updateStatus));
         JobStore.prefs(this).registerOnSharedPreferenceChangeListener(jobsChanged);
+        catalog = new AppCatalog(this, this::populateApps);
         render();
     }
     @Override protected void onNewIntent(Intent intent) {
@@ -71,15 +81,26 @@ public final class MainActivity extends Activity {
     }
     @Override protected void onResume() {
         super.onResume();
+        InboxService.observe(inboxChanged);
         if (admin != null) admin.connect();
+        if (catalog != null) catalog.refresh();
         updateStatus();
         updateJobs();
         if ("Inbox".equals(tab)) render();
     }
     @Override protected void onSaveInstanceState(Bundle out) { out.putString("tab", tab); super.onSaveInstanceState(out); }
+    @Override protected void onPause() {
+        InboxService.forget(inboxChanged);
+        handler.removeCallbacks(renderInbox);
+        if (appTab == AppPolicy.Kind.PRIVATE && appQuery != null) appQuery.setText("");
+        if (catalog != null) catalog.hidePrivateNow();
+        super.onPause();
+    }
     @Override protected void onDestroy() {
+        InboxService.forget(inboxChanged);
         JobStore.prefs(this).unregisterOnSharedPreferenceChangeListener(jobsChanged);
         if (admin != null) admin.close();
+        if (catalog != null) catalog.close();
         worker.shutdownNow();
         handler.removeCallbacksAndMessages(null);
         super.onDestroy();
@@ -108,6 +129,7 @@ public final class MainActivity extends Activity {
         }
         root.removeAllViews();
         history = null; configEditor = null; adminStatus = null; adminOutput = null; themeStatus = null;
+        appRows = null; appTabs = null; appQuery = null;
         LinearLayout heading = column();
         heading.setPadding(dp(20), dp(14), dp(20), dp(8));
         text(heading, "oma / system preview", 14, ACCENT, true);
@@ -207,28 +229,53 @@ public final class MainActivity extends Activity {
         button(workspace, "Open terminal", () -> { tab = "Terminal"; render(); });
         button(workspace, "Omarchy themes · " + OmarchyThemes.title(palette), () -> { tab = "Themes"; render(); });
         button(workspace, "Connect runtime and controls", () -> { tab = "Setup"; render(); });
-        LinearLayout apps = card("Applications", "Installed Android apps");
-        EditText query = edit(apps, "Find an app", "", false);
-        LinearLayout list = column(); apps.addView(list);
-        List<ResolveInfo> resolved = getPackageManager().queryIntentActivities(new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER), 0);
-        resolved.sort(Comparator.comparing(info -> info.loadLabel(getPackageManager()).toString(), String.CASE_INSENSITIVE_ORDER));
-        Runnable populate = () -> {
-            list.removeAllViews();
-            String filter = query.getText().toString().toLowerCase(Locale.ROOT);
-            for (ResolveInfo info : resolved) {
-                String name = info.loadLabel(getPackageManager()).toString();
-                if (!name.toLowerCase(Locale.ROOT).contains(filter)) continue;
-                if (getPackageName().equals(info.activityInfo.packageName)) continue;
-                button(list, name, () -> startActivity(new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER)
-                        .setComponent(new ComponentName(info.activityInfo.packageName, info.activityInfo.name)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)));
-            }
-        };
-        query.addTextChangedListener(new TextWatcher() {
+        LinearLayout apps = card("Applications", "Search names or packages. Work and private apps keep their own profiles.");
+        appTabs = new LinearLayout(this); apps.addView(appTabs);
+        appQuery = edit(apps, "Find an app", "", false);
+        appQuery.setImeOptions(appQuery.getImeOptions() | android.view.inputmethod.EditorInfo.IME_FLAG_NO_PERSONALIZED_LEARNING);
+        // Browsing never forces the keyboard open; tapping the search field does.
+        apps.setFocusableInTouchMode(true); apps.requestFocus();
+        appRows = column(); apps.addView(appRows);
+        appQuery.addTextChangedListener(new TextWatcher() {
             public void beforeTextChanged(CharSequence s, int start, int count, int after) { }
-            public void onTextChanged(CharSequence s, int start, int before, int count) { populate.run(); }
+            public void onTextChanged(CharSequence s, int start, int before, int count) { populateApps(); }
             public void afterTextChanged(Editable s) { }
         });
-        populate.run();
+        populateApps();
+    }
+    private void populateApps() {
+        if (catalog == null || appRows == null || appTabs == null || appQuery == null || isDestroyed()) return;
+        boolean work = catalog.profiles().stream().anyMatch(p -> p.kind == AppPolicy.Kind.WORK);
+        boolean privateSpace = catalog.homeRole() && catalog.privateShown()
+                && catalog.profiles().stream().anyMatch(p -> p.kind == AppPolicy.Kind.PRIVATE);
+        if ((appTab == AppPolicy.Kind.WORK && !work) || (appTab == AppPolicy.Kind.PRIVATE && !privateSpace)) {
+            appTab = AppPolicy.Kind.PERSONAL;
+            appQuery.setText("");
+        }
+        // Private labels and query text are never left in Recents screenshots.
+        if (appTab == AppPolicy.Kind.PRIVATE) getWindow().addFlags(WindowManager.LayoutParams.FLAG_SECURE);
+        else getWindow().clearFlags(WindowManager.LayoutParams.FLAG_SECURE);
+        appTabs.removeAllViews(); appRows.removeAllViews();
+        List<AppPolicy.Kind> tabs = new ArrayList<>(); tabs.add(AppPolicy.Kind.PERSONAL);
+        if (work) tabs.add(AppPolicy.Kind.WORK); if (privateSpace) tabs.add(AppPolicy.Kind.PRIVATE);
+        for (AppPolicy.Kind kind : tabs) button(appTabs, (kind == appTab ? "✓ " : "") + kind.name().toLowerCase(Locale.ROOT), () -> {
+            appTab = kind; appQuery.setText(""); populateApps();
+        });
+        for (AppCatalog.Profile profile : catalog.profiles()) if (profile.kind == appTab && (appTab == AppPolicy.Kind.WORK || appTab == AppPolicy.Kind.PRIVATE)) {
+            String action = appTab == AppPolicy.Kind.PRIVATE ? (profile.quiet ? "Unlock private space" : "Lock private space")
+                    : (profile.quiet ? "Resume work apps" : "Pause work apps");
+            button(appRows, action, () -> catalog.quiet(profile, !profile.quiet));
+        }
+        if (!catalog.error.isEmpty()) text(appRows, catalog.error, 14, MUTED, false);
+        String filter = appQuery.getText().toString();
+        int count = 0;
+        for (AppCatalog.Entry entry : catalog.entries()) {
+            boolean inTab = entry.kind == appTab || (appTab == AppPolicy.Kind.PERSONAL && entry.kind == AppPolicy.Kind.CLONE);
+            if (!inTab || !AppPolicy.matches(entry.label, entry.packageName, filter)) continue;
+            String label = entry.label + (entry.kind == AppPolicy.Kind.CLONE ? " · clone" : "") + (entry.shortcut != null ? " · shortcut" : "");
+            button(appRows, label, () -> catalog.open(entry)); count++;
+        }
+        if (count == 0) text(appRows, appTab == AppPolicy.Kind.PRIVATE ? "Unlock private space to view its apps." : "No matching apps", 14, MUTED, false);
     }
     private void terminal() {
         LinearLayout box = card("Run a command", "Each job loads installed Omarchy shell defaults, then your session.sh overrides. Output arrives when the process exits.");
@@ -304,7 +351,51 @@ public final class MainActivity extends Activity {
         button(choices, "Import an Omarchy colors.toml", () -> startActivityForResult(new Intent(Intent.ACTION_OPEN_DOCUMENT)
                 .addCategory(Intent.CATEGORY_OPENABLE).setType("*/*").addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION), 811));
         text(choices, "Imported palettes are color data only. Desktop Hyprland/Waybar settings do not control Android; launcher widgets and wallpaper files are not imported in this build.", 13, MUTED, false);
+        LinearLayout wallpaper = card("Android wallpaper", "Set a photo or the current palette's background color on the home and lock screens. An active live wallpaper is kept.");
+        text(wallpaper, ui.getString("wallpaper-result", "No wallpaper applied by Oma yet."), 14, MUTED, false);
+        button(wallpaper, "Choose a wallpaper image", () -> {
+            if (wallpaperBusy) throw new IllegalStateException("Wait for the current wallpaper operation.");
+            startActivityForResult(new Intent(Intent.ACTION_OPEN_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE)
+                    .setType("image/*").addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION), 812);
+        });
+        button(wallpaper, "Use palette background color", () -> applyWallpaper(null, BG));
         history = card("Theme and config jobs", "A terminal sync is confirmed only after Termux returns a successful result.");
+    }
+    private void applyWallpaper(Uri image, int color) {
+        if (wallpaperBusy) throw new IllegalStateException("Wait for the current wallpaper operation.");
+        wallpaperBusy = true;
+        worker.execute(() -> {
+            java.io.File temporary = null;
+            String outcome;
+            try {
+                temporary = java.io.File.createTempFile("wallpaper-", ".image", getCacheDir());
+                try (java.io.OutputStream output = new java.io.FileOutputStream(temporary)) {
+                    if (image == null) {
+                        android.graphics.Bitmap bitmap = android.graphics.Bitmap.createBitmap(2, 2, android.graphics.Bitmap.Config.ARGB_8888);
+                        try { bitmap.eraseColor(color); bitmap.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, output); }
+                        finally { bitmap.recycle(); }
+                    } else try (java.io.InputStream input = getContentResolver().openInputStream(image)) {
+                        if (input == null) throw new java.io.IOException("Cannot open this image.");
+                        byte[] buffer = new byte[8192]; int count, total = 0;
+                        while ((count = input.read(buffer)) != -1) {
+                            total += count;
+                            if (total > 20 * 1024 * 1024) throw new java.io.IOException("Choose an image smaller than 20 MB.");
+                            output.write(buffer, 0, count);
+                        }
+                    }
+                }
+                outcome = dev.omalauncher.platform.StaticWallpaper.apply(getApplicationContext(), temporary).message;
+            } catch (Exception e) { outcome = "Wallpaper was not applied: " + e.getMessage(); }
+            finally { if (temporary != null) temporary.delete(); }
+            String message = outcome;
+            ui.edit().putString("wallpaper-result", message).apply();
+            handler.post(() -> {
+                wallpaperBusy = false;
+                if (isDestroyed()) return;
+                Toast.makeText(this, message, Toast.LENGTH_LONG).show();
+                if ("Themes".equals(tab)) render();
+            });
+        });
     }
     private void files() {
         LinearLayout box = card("Native home", "Persistent files in your Termux home directory.");
@@ -327,6 +418,8 @@ public final class MainActivity extends Activity {
     }
     @Override protected void onActivityResult(int request, int result, Intent data) {
         super.onActivityResult(request, result, data);
+        if (request == 812 && result == RESULT_OK && data != null && data.getData() != null)
+            safely(() -> applyWallpaper(data.getData(), BG));
         if (request == 811 && result == RESULT_OK && data != null && data.getData() != null) {
             Uri uri = data.getData();
             worker.execute(() -> {
@@ -418,7 +511,7 @@ public final class MainActivity extends Activity {
             LinearLayout row = card(String.valueOf(title), item.getPackageName());
             text(row, String.valueOf(message), 15, TEXT, false);
             if (notification.contentIntent != null) button(row, "Open", () -> {
-                try { notification.contentIntent.send(); } catch (PendingIntent.CanceledException e) { throw new IllegalStateException("This notification is no longer available."); }
+                try { InboxService.open(this, item.getKey()); } catch (PendingIntent.CanceledException e) { throw new IllegalStateException("This notification is no longer available."); }
             });
             if (item.isClearable()) button(row, "Dismiss", () -> { InboxService.dismiss(item.getKey()); handler.postDelayed(this::render, 250); });
         }
@@ -447,6 +540,9 @@ public final class MainActivity extends Activity {
         button(management, "Authorize controls", () -> admin.request());
         adminStatus = text(management, "", 14, ACCENT, false);
         LinearLayout interfaceBox = card("3 / Your interface", "Use Oma as home and open its panels from other apps. Android's secure lock screen, system shade, and other apps keep their own interface in this preview.");
+        if (Build.VERSION.SDK_INT >= 35) button(interfaceBox, catalog.privateShown() ? "Hide private-space tab" : "Show private-space tab", () -> {
+            catalog.privateShown(!catalog.privateShown()); appTab = AppPolicy.Kind.PERSONAL; render();
+        });
         button(interfaceBox, "Choose default home", () -> {
             RoleManager roles = getSystemService(RoleManager.class);
             if (roles.isRoleAvailable(RoleManager.ROLE_HOME)) startActivityForResult(roles.createRequestRoleIntent(RoleManager.ROLE_HOME), 820);

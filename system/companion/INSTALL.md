@@ -1,16 +1,16 @@
-# Install Oma System Preview 0.2
+# Install Oma System Preview 0.3
 
 This is an ordinary Android APK. It preserves Android, installs alongside the
 original Omalauncher and uses native Termux packages. Installation requires no
 flashing, bootloader unlock, root, VM or factory reset. It updates an existing
-0.1 preview signed with this workspace's same debug key.
+0.1/0.2 preview signed with this workspace's same debug key.
 
 ## 1. Install the APK
 
 The built APK on this computer is:
 
 ```text
-/home/park/Downloads/Oma-System-Preview-0.2.0.apk
+/home/park/Downloads/Oma-System-Preview-0.3.0.apk
 ```
 
 Copy it to the phone's Downloads folder using USB file transfer or your usual
@@ -21,7 +21,7 @@ USB debugging is not needed for this file-based installation.
 Alternatively, with an authorized USB-debugging connection, run from the repository:
 
 ```sh
-.local/toolchains/platform-tools/adb install -r .local/companion/oma-system-preview-0.2.0.apk
+.local/toolchains/platform-tools/adb install -r .local/companion/oma-system-preview-0.3.0.apk
 ```
 
 The package is `dev.omalauncher.systempreview`; the original `dev.omalauncher`
@@ -108,3 +108,9 @@ restoration; it does not report the theme as synchronized.
 This is a locally signed preview for testing. Build checks are recorded in
 [VALIDATION.md](VALIDATION.md); the Tecno installation and permission flows still
 need a real device check before broader distribution.
+
+## Check the 0.3 additions
+
+In **Themes → Android wallpaper**, choose a photo or apply the palette background color, then read the result. Live wallpapers are kept. In **Home**, verify search and any work/clone profile. Set Oma as default home before trying a browser’s **Add to home screen**; accept the pin request, then open the shortcut from Applications. **Inbox** should update when notifications arrive or disappear.
+
+Private Space requires Android 15 or later and a configured private profile. An Android 14 Tecno cannot validate that feature. This APK requires Android 10 or later; model-independent source code does not guarantee every OEM’s behavior.

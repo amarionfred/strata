@@ -7,8 +7,8 @@ android {
         applicationId = "dev.omalauncher.systempreview"
         minSdk = 29
         targetSdk = 36
-        versionCode = 2
-        versionName = "0.2.0-preview"
+        versionCode = 3
+        versionName = "0.3.0-preview"
     }
     buildFeatures { aidl = true }
     compileOptions {
@@ -18,6 +18,8 @@ android {
     lint { abortOnError = true }
     sourceSets.getByName("main").assets.directories.add(layout.buildDirectory.dir("generated/omarchy-assets").get().asFile.path)
     sourceSets.getByName("main").kotlin.directories.add(layout.buildDirectory.dir("generated/omarchy-sources").get().asFile.path)
+    sourceSets.getByName("main").java.directories.add("../../app/src/main/java")
+    sourceSets.getByName("test").java.directories.add("../../app/src/test/java")
 }
 
 // Compile the launcher's actual parser/renderer, without its PRoot-dependent runtime.

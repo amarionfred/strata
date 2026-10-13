@@ -4,8 +4,8 @@ A separate Android APK implementing the accepted **native terminal + Android
 management + shared phone interface** direction. It installs as
 `dev.omalauncher.systempreview`, alongside `dev.omalauncher`.
 
-Version 0.2 connects Omarchy palettes and portable configs to this preview and
-its native terminal. Follow [INSTALL.md](INSTALL.md) for installation and
+Version 0.3 adds profile-aware apps, browser pin shortcuts, wallpaper application
+and notification fixes to the Omarchy/native-terminal preview. Follow [INSTALL.md](INSTALL.md) for installation and
 [VALIDATION.md](VALIDATION.md) for build checks and untested device scope.
 
 The preview uses the existing Android installation. It contains no flashing,
@@ -16,7 +16,10 @@ access. The original launcher's PRoot backend has not yet been migrated.
 
 ## Implemented surfaces
 
-- Home and searchable Android app launches; optional Android home-role selection.
+- Home and accent-insensitive Android app search, with personal/work tabs and clone badges. Labels load off the main thread and refresh after app/profile/locale changes. Actions revalidate stable profile serials.
+- Android 15+ private-space tab with system lock/unlock, default-home role checks and immediate hiding during locks/pause. Private apps stay out of pinned shortcuts and notification feeds. This needs physical Android 15+ testing; it is unavailable on Android 14.
+- Browser/app pin-shortcut confirmation and pinned shortcut launches when Oma is the default home app. Shortcuts appear in Applications; private-space requests are rejected.
+- Themes can apply a chosen image or current palette background color to Android home/lock wallpaper. An active live wallpaper is preserved; results distinguish both screens, home only and failure. Wallpaper changes are explicit; palette selection alone does not overwrite Android wallpaper.
 - Native command jobs via Termux's documented `RUN_COMMAND` API, with private
   persistent output, actual exit codes, missing-result and truncation reporting.
   Each job starts in the native home. Interactive shells/editors open a real
@@ -189,3 +192,7 @@ Shizuku, Omalauncher and Omarchy notices are bundled with the APK, together with
 Apache 2.0 for Kotlin, JetBrains annotations and AndroidX Annotation. See
 `assets/THIRD_PARTY.txt` and `assets/omarchy/LICENSE`.
 Termux itself is installed separately and is not bundled/rebranded in this APK.
+
+## Upstream maintenance
+
+See [the audit](../../docs/UPSTREAM_AUDIT.md) for the original launcher fixes, exact PR dispositions and remaining work. Reordering and Wayland multitouch changes are in `app/`; this preview does not contain that grid or compositor. There is no claim that all upstream issues or every Android model are qualified.

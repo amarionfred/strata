@@ -23,7 +23,7 @@ import java.text.DateFormat;
 import java.util.*;
 import java.util.concurrent.*;
 
-/** A small native UI for validating runtime, management, and phone-wide access together. */
+/** Android home and native workspace, with optional privileged administration. */
 public final class MainActivity extends Activity {
     private int BG, SURFACE, TEXT, MUTED, ACCENT;
     private OmarchyPalette palette;
@@ -31,6 +31,7 @@ public final class MainActivity extends Activity {
     private final ExecutorService worker = Executors.newSingleThreadExecutor();
     private final SharedPreferences.OnSharedPreferenceChangeListener jobsChanged = (prefs, key) -> handler.post(() -> { updateJobs(); updateStatus(); });
     private LinearLayout root, content, history;
+    private WorkspaceView workspaceView;
     private TextView status, adminStatus, adminOutput, themeStatus, rootStatus;
     private EditText configEditor;
     private AdminClient admin;
@@ -87,10 +88,12 @@ public final class MainActivity extends Activity {
         updateStatus();
         updateJobs();
         if ("Inbox".equals(tab)) render();
+        if (workspaceView != null) workspaceView.resumeWorkspace();
     }
     @Override protected void onSaveInstanceState(Bundle out) { out.putString("tab", tab); super.onSaveInstanceState(out); }
     @Override protected void onPause() {
         InboxService.forget(inboxChanged);
+        if (workspaceView != null) workspaceView.suspendWorkspace();
         handler.removeCallbacks(renderInbox);
         if (appTab == AppPolicy.Kind.PRIVATE && appQuery != null) appQuery.setText("");
         if (catalog != null) catalog.hidePrivateNow();
@@ -101,6 +104,7 @@ public final class MainActivity extends Activity {
         JobStore.prefs(this).unregisterOnSharedPreferenceChangeListener(jobsChanged);
         if (admin != null) admin.close();
         if (catalog != null) catalog.close();
+        if (workspaceView != null) { workspaceView.close(); workspaceView = null; }
         worker.shutdownNow();
         handler.removeCallbacksAndMessages(null);
         super.onDestroy();
@@ -127,6 +131,7 @@ public final class MainActivity extends Activity {
             if (palette.light()) flags |= View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR | View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR;
             getWindow().getDecorView().setSystemUiVisibility(flags);
         }
+        if (workspaceView != null) { workspaceView.close(); workspaceView = null; }
         root.removeAllViews();
         history = null; configEditor = null; adminStatus = null; adminOutput = null; themeStatus = null; rootStatus = null;
         appRows = null; appTabs = null; appQuery = null;
@@ -135,28 +140,33 @@ public final class MainActivity extends Activity {
         text(heading, "strata", 14, ACCENT, true);
         status = text(heading, "", 12, MUTED, false);
         root.addView(heading);
-        ScrollView scroll = new ScrollView(this);
-        content = column();
-        content.setPadding(dp(20), dp(8), dp(20), dp(24));
-        scroll.addView(content);
-        root.addView(scroll, new LinearLayout.LayoutParams(-1, 0, 1));
-        text(content, tab, 30, TEXT, false);
-        switch (tab) {
-            case "System": system(); break;
-            case "Terminal": terminal(); break;
-            case "Software": software(); break;
-            case "Files": files(); break;
-            case "Themes": themes(); break;
-            case "Controls": controls(); break;
-            case "Inbox": inbox(); break;
-            case "Setup": setup(); break;
-            default: tab = "Home"; home();
+        if (Arrays.asList("Terminal", "Files", "Services", "Software", "Desktop").contains(tab)) {
+            workspaceView = new WorkspaceView(this, tab);
+            root.addView(workspaceView, new LinearLayout.LayoutParams(-1, 0, 1));
+        } else {
+            ScrollView scroll = new ScrollView(this);
+            content = column();
+            content.setPadding(dp(20), dp(8), dp(20), dp(24));
+            scroll.addView(content);
+            root.addView(scroll, new LinearLayout.LayoutParams(-1, 0, 1));
+            text(content, tab, 30, TEXT, false);
+            switch (tab) {
+                case "System": system(); break;
+                case "Command jobs": terminal(); break;
+                case "Root packages": software(); break;
+                case "Advanced files": files(); break;
+                case "Themes": themes(); break;
+                case "Controls": controls(); break;
+                case "Inbox": inbox(); break;
+                case "Setup": setup(); break;
+                default: tab = "Home"; home();
+            }
         }
         HorizontalScrollView nav = new HorizontalScrollView(this);
         nav.setHorizontalScrollBarEnabled(false);
         LinearLayout items = new LinearLayout(this);
         items.setPadding(dp(8), 0, dp(8), dp(4));
-        for (String name : new String[]{"Home", "System", "Terminal", "Software", "Files", "Themes", "Controls", "Inbox", "Setup"}) {
+        for (String name : new String[]{"Home", "Terminal", "Desktop", "Files", "Software", "Services", "Themes", "Controls", "Inbox", "System", "Setup"}) {
             Button button = button(items, name, () -> { tab = name; render(); });
             button.setTextColor(name.equals(tab) ? ACCENT : MUTED);
             button.setMinWidth(0);
@@ -220,7 +230,7 @@ public final class MainActivity extends Activity {
     }
     private void updateStatus() {
         if (status == null || isDestroyed()) return;
-        status.setText(RootJobsService.status(this)
+        status.setText("Native workspace"
                 + "  ·  " + (admin != null && admin.service != null ? "Android controls connected" : "Android controls offline"));
         if (rootStatus != null) rootStatus.setText(RootJobsService.status(this));
         if (adminStatus != null && admin != null) adminStatus.setText(admin.status());
@@ -229,7 +239,9 @@ public final class MainActivity extends Activity {
     private void home() {
         LinearLayout workspace = card("Your workspace", "Native tools, Android apps, and phone controls in one place.");
         button(workspace, "Open terminal", () -> { tab = "Terminal"; render(); });
-        button(workspace, "Root and Linux services", () -> { tab = "System"; render(); });
+        button(workspace, "Desktop", () -> { tab = "Desktop"; render(); });
+        button(workspace, "Files", () -> { tab = "Files"; render(); });
+        button(workspace, "Native services", () -> { tab = "Services"; render(); });
         button(workspace, "Omarchy themes · " + OmarchyThemes.title(palette), () -> { tab = "Themes"; render(); });
         button(workspace, "Connect runtime and controls", () -> { tab = "Setup"; render(); });
         LinearLayout apps = card("Applications", "Search names or packages. Work and private apps keep their own profiles.");
@@ -311,6 +323,9 @@ public final class MainActivity extends Activity {
         return id;
     }
     private void system() {
+        LinearLayout advanced = card("Optional root tools", "Existing root integration and command history.");
+        for (String name : new String[]{"Command jobs", "Root packages", "Advanced files"})
+            button(advanced, name, () -> { tab = name; render(); });
         LinearLayout access = card("Device root", "An installed root manager must grant Strata access. USB debugging, Shizuku, and a Linux sudo package do not root Android.");
         rootStatus = text(access, "", 14, ACCENT, false);
         button(access, "Request root and check identity", () -> rootRun("inspect", "Root identity and kernel", RootCommands.inspect()));
@@ -394,7 +409,7 @@ public final class MainActivity extends Activity {
                 .setNegativeButton("Cancel", null).setPositiveButton("Install", (dialog, which) -> safely(() -> run("install", "Omarchy terminal tools",
                         "exec " + Commands.PREFIX + "/bin/pkg install -y starship tmux eza fzf bat zoxide git nano"))).show());
         text(active, "btop theme files are included for compatible installations. Termux supplies btop through its root repository, so this setup does not install it on a stock phone.", 13, MUTED, false);
-        button(active, "Open themed terminal", () -> TermuxBridge.run(this, "interactive", "Omarchy interactive shell", "", true));
+        button(active, "Open themed terminal", () -> { tab = "Terminal"; render(); });
         LinearLayout choices = card("Omarchy palettes", "The same 22 bundled palettes and color-resolution rules as the original launcher. Select one, then apply it to the terminal.");
         try {
             for (OmarchyPalette candidate : OmarchyThemes.bundled(this)) {
@@ -480,6 +495,10 @@ public final class MainActivity extends Activity {
     }
     @Override protected void onActivityResult(int request, int result, Intent data) {
         super.onActivityResult(request, result, data);
+        if (request == 830 || request == 831) {
+            if (workspaceView != null) workspaceView.documentResult(request, result == RESULT_OK && data != null ? data.getData() : null);
+            return;
+        }
         if (request == 812 && result == RESULT_OK && data != null && data.getData() != null)
             safely(() -> applyWallpaper(data.getData(), BG));
         if (request == 811 && result == RESULT_OK && data != null && data.getData() != null) {
@@ -579,6 +598,9 @@ public final class MainActivity extends Activity {
         }
     }
     private void setup() {
+        LinearLayout nativeSetup = card("Native workspace", "Embedded terminals, persistent files, packages and services. Termux supplies native programs; Strata owns the workspace interface.");
+        button(nativeSetup, "Prepare workspace tools", () -> run("install", "Prepare native workspace", "exec pkg install -y python tmux git nano curl"));
+        button(nativeSetup, "Open workspace", () -> { tab = "Terminal"; render(); });
         LinearLayout rootSetup = card("Root and Linux", "Root features require a phone that is already rooted. This app cannot root a stock phone. Grant Strata access in your root manager; the Linux runtime module currently requires Magisk.");
         button(rootSetup, "Request root and check identity", () -> rootRun("inspect", "Root identity and kernel", RootCommands.inspect()));
         button(rootSetup, "Runtime installation instructions", () -> openUrl("https://github.com/amarionfred/strata#root-and-linux"));

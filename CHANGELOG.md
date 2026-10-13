@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.6.0-preview
+
+- Embedded native terminal with reconnectable tmux sessions, actual PTY resize,
+  Ctrl keys, clipboard controls and persistent shell state.
+- Native home browser/editor with conflict detection, backups, draft recovery and
+  Android text-document import/export.
+- Interactive package installation and native service save/start/stop/log controls.
+- Optional native X11/Openbox desktop rendered inside Strata, with graphical
+  program launching, keyboard/pointer input and palette adaptation.
+- Authenticated loopback runtime broker; private Unix display socket; preserved
+  existing root backend, Android app profiles and original launcher source.
+- Stable installer adds native workspace packages. Host and browser integration
+  checks exercise real processes and graphics. Physical phone validation is pending.
+
+
 The most important changes in each release. The Play Store notes for a release
 are in `fastlane/metadata/android/en-US/changelogs/<versionCode>.txt`.
 Dates are when the build was uploaded to Play.

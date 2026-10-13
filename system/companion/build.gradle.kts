@@ -7,8 +7,8 @@ android {
         applicationId = "dev.omalauncher.systempreview"
         minSdk = 29
         targetSdk = 36
-        versionCode = 5
-        versionName = "0.5.0-preview"
+        versionCode = 6
+        versionName = "0.6.0-preview"
     }
     buildFeatures { aidl = true }
     compileOptions {
@@ -17,6 +17,7 @@ android {
     }
     lint { abortOnError = true }
     sourceSets.getByName("main").assets.directories.add(layout.buildDirectory.dir("generated/omarchy-assets").get().asFile.path)
+    sourceSets.getByName("main").assets.directories.add(layout.buildDirectory.dir("generated/workspace-assets").get().asFile.path)
     sourceSets.getByName("main").kotlin.directories.add(layout.buildDirectory.dir("generated/omarchy-sources").get().asFile.path)
     sourceSets.getByName("main").java.directories.add("../../app/src/main/java")
     sourceSets.getByName("test").java.directories.add("../../app/src/test/java")
@@ -33,11 +34,16 @@ val syncOmarchyThemes = tasks.register<Sync>("syncOmarchyThemes") {
     from("../../app/src/main/assets") { include("themes/*.toml") }
     into(layout.buildDirectory.dir("generated/omarchy-assets"))
 }
-tasks.named("preBuild") { dependsOn(syncOmarchyThemes, syncOmarchySources) }
+val syncWorkspace = tasks.register<Sync>("syncWorkspace") {
+    from("../workspace") { include("runtime.py") }
+    into(layout.buildDirectory.dir("generated/workspace-assets/runtime"))
+}
+tasks.named("preBuild") { dependsOn(syncOmarchyThemes, syncOmarchySources, syncWorkspace) }
 
 dependencies {
     implementation("dev.rikka.shizuku:api:13.1.5")
     implementation("dev.rikka.shizuku:provider:13.1.5")
     compileOnly("androidx.annotation:annotation:1.3.0")
     testImplementation("junit:junit:4.13.2")
+    testImplementation("org.json:json:20260814")
 }

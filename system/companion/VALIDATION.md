@@ -1,53 +1,47 @@
-# Strata 0.5.0-preview checks
+# Strata 0.6.0-preview checks
 
-Checked on 2026-10-13.
-
-The Termux installer has 23 passing host tests for first installation, reusing a
-verified download on retry, replacing an older APK, checksum failures, failed
-downloads, release selection, preserving existing files and configuration,
-installation request arguments, URI encoding, storage access, and verified copies
-to Downloads. Failed copies preserve an existing APK and remove partial files. Android
-commands are stubbed in these tests; they do not confirm a phone installation.
-The live download and checksum steps were checked against the published 0.5.0 APK.
-The Tecno screenshots confirm that download verification completed, but Android's
-installation window did not appear after the direct request. The user subsequently
-reported that the APK was installed. This confirms installation only, not command
-permissions, native runtime operation, or the intended integrated phone environment.
-The exact successful installation route was not independently observed.
+Checked on 2026-10-13. The shipped APK contains the native runtime broker and
+embedded terminal, files, packages, services and graphical frontend.
 
 | Check | Result |
 | --- | --- |
-| Native app tests | 28 passed |
-| Native runtime and archive tests | 11 passed |
+| Companion JVM tests | 31 passed |
+| Native workspace integration | 9 passed |
+| Installer regression tests | 23 passed |
+| Embedded browser workspace | Passed at phone dimensions |
+| Actual native X11 graphics | Pixels, pointer and keyboard passed |
 | APK build | Passed |
-| Lint | 0 errors, 15 warnings |
-| APK signature | v2 verified; same key as previews 0.2–0.4 |
-| Runtime modules | arm64, arm, x64 built; archive and payload checksums verified |
+| Lint | 0 errors, 19 warnings |
+| Signature | Verified; same certificate as the installed 0.5 preview |
+| Bundled runtime/frontend assets | Match tested source bytes |
 
-Root command tests check the actual host UID before allowing the payload, reject
-invalid arguments, and verify that saving a service does not execute it. Invalid
-shell syntax preserves the current script and its backup.
+Native checks execute real Bash/Python, PTYs, tmux sessions, processes and sockets.
+They cover resize, Ctrl-C, reconnection with persistent cwd/environment, interpreter
+execution and exit codes, conflict-safe file edits/backups, service process identity,
+logs/stop, authentication/replay rejection and stopping without deleting files.
+A separate test runs the exact APK stdin bootstrap, terminates and restarts the
+broker process, and verifies that native terminal/service PIDs are unchanged.
+Java tests cover mutual authentication and refusing an impersonated server.
 
-Runtime tests use native Linux user namespaces on the host. They cover actual
-namespace UID 0, mounts, persistent files, installed packages and sudo, service
-restart, and process cleanup. These are host results, not device root verification.
+The browser drives the actual bundled frontend against the native broker. It
+checks terminal/interpreter output, editor saves, draft recovery across navigation,
+services and a real X11 application's displayed pixels and keyboard/pointer effects.
+Host graphics use an isolated Arch Xvnc 1.16.2-5 binary; no VM, PRoot, Android
+emulator, phone flashing or system-package changes were used.
 
-The original launcher and OWL were unchanged in this update. Their earlier
-[119 and 82 passing tests](../../docs/validation-strata-0.4.0.json) remain recorded
-with the previous release; they were not rerun for this update.
+**Physical-phone validation is pending.** ADB had no connected device. The user's
+previous installation report concerns 0.5. It does not validate this APK's update,
+RUN_COMMAND/stdin bootstrap, WebView/IME, picker, Android X11 packages/SELinux,
+background lifecycle, performance or memory use on the Tecno KL4. Protected Android
+surfaces and the full phone-wide presentation remain unfinished.
 
-Application ID: `dev.omalauncher.systempreview`. Version code: 5. Android 10+.
+Original launcher/OWL and root-runtime code are preserved and unchanged; their
+previous checks were not rerun. Optional root-runtime ZIP assets remain version
+0.5.0 and retain their existing checksums. They require a phone with existing root.
 
-APK SHA256:
+Application ID: `dev.omalauncher.systempreview`; version code: 6; Android 10+.
 
-```text
-26e959b015d0af831dc6e45cc471a375465d27013836fda387c59d4c77686b8e
-```
+APK SHA256: `55a3476fb50f2b206b6a4a3798f0b7d943e2a0fcdc4925c65d71975e51aeaa11`.
 
-The Tecno KL4 is still stock and unrooted. APK installation is user-reported;
-root-manager grants/denials, module installation and startup,
-SELinux compatibility, interactive terminals, foreground-service lifecycle, and
-normal home/theme/notification behavior still need physical device testing.
-The complete phone interface is unfinished.
-
-[Machine-readable results](../../docs/validation-strata-0.5.0.json) · [Upstream audit](../../docs/UPSTREAM_AUDIT.md)
+[Machine-readable results](../../docs/validation-strata-0.6.0.json) ·
+[Architecture and reproducible checks](../../docs/NATIVE_WORKSPACE.md)

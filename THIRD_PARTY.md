@@ -37,6 +37,13 @@ Omalauncher is not affiliated with Omarchy.
 
 ## Bundled at build time
 
+The Strata APK bundles xterm.js 5.5.0 and addon-fit 0.10.0 (MIT), and unmodified
+noVNC 1.6.0 browser sources (MPL-2.0, with pako under MIT) under
+`system/companion/src/main/assets/workspace/vendor/`. Their complete notices and
+license texts accompany the sources. Origins are recorded in `vendor/manifest.json`.
+Termux, tmux, TigerVNC, Openbox and other native programs are installed separately
+from their package repositories; they are not copied into the APK.
+
 `scripts/fetch-proot.sh` downloads pinned versions of Termux's builds of PRoot (GPL-2.0),
 talloc (LGPL-3.0) and libandroid-shmem (BSD-3-Clause); they are not in this
 repository. The app lists every component it ships, with its license, under

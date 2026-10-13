@@ -27,6 +27,11 @@ check_phone() {
 
 ensure_tools() {
     local -a packages=()
+    # These are the real native workspace, not build tools or a guest distribution.
+    local tool
+    for tool in python tmux git nano; do
+        command -v "$tool" >/dev/null || packages+=("$tool")
+    done
     command -v curl >/dev/null || packages+=(curl)
     command -v sha256sum >/dev/null || packages+=(coreutils)
     command -v awk >/dev/null || packages+=(gawk)

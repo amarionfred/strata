@@ -1,0 +1,34 @@
+{
+  "version": "0.6.0-preview",
+  "version_code": 6,
+  "date": "2026-10-13",
+  "application_id": "dev.omalauncher.systempreview",
+  "apk_sha256": "55a3476fb50f2b206b6a4a3798f0b7d943e2a0fcdc4925c65d71975e51aeaa11",
+  "signer_sha256": "48e6c57d0d87daf1d0bbd8bbe0372c57eb584bd525fccd95f5092938dd10b04f",
+  "tests": {
+    "installer": 23,
+    "companion_jvm": 31,
+    "native_workspace": 9,
+    "browser_workspace": "passed",
+    "native_x11_graphics_pointer_keyboard": "passed",
+    "actual_broker_process_restart": "passed; terminal and service PIDs preserved"
+  },
+  "lint": {
+    "errors": 0,
+    "warnings": 19
+  },
+  "apk_source_assets_verified": true,
+  "physical_device_validation": false,
+  "device_status": "No device connected to ADB",
+  "unchanged": [
+    "root runtime 0.5.0 modules",
+    "original launcher app/ and owl/"
+  ],
+  "pending": [
+    "Android RUN_COMMAND bootstrap and permission on phone",
+    "WebView/IME and Android document picker",
+    "Android X11 package execution/SELinux",
+    "OEM process lifecycle and phone RAM/performance",
+    "protected Android SystemUI integration"
+  ]
+}

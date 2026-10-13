@@ -1,0 +1,2 @@
+# Preserve upstream renderer sources and keep them separate in code review.
+system/companion/src/main/assets/workspace/vendor/** linguist-vendored -whitespace

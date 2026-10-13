@@ -6,7 +6,7 @@ Open Termux and paste this whole line. It works from any folder:
 pkg install -y curl && curl -fL https://raw.githubusercontent.com/amarionfred/strata/main/install.sh -o ~/strata-install.sh && bash ~/strata-install.sh
 ```
 
-The script downloads the published APK, verifies it, enables the Termux connection,
+The script installs Python, tmux, Git and nano, downloads the published APK, verifies it, enables the Termux connection,
 saves `strata.apk` in the phone's Downloads folder, and tries to open Android's
 installer. Existing Termux settings are kept; changed settings
 are backed up beside `termux.properties` as `termux.properties.strata-backup`.

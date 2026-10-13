@@ -1,6 +1,15 @@
 Shizuku API 13.1.5
 https://github.com/RikkaApps/Shizuku-API
 
+xterm.js 5.5.0 and addon-fit 0.10.0 (MIT).
+https://github.com/xtermjs/xterm.js
+Notices: workspace/vendor/xterm-LICENSE and addon-fit-LICENSE.
+
+noVNC 1.6.0 (MPL-2.0) and its bundled pako (MIT).
+Unmodified browser source and license texts are included under workspace/vendor/novnc.
+https://github.com/novnc/noVNC/tree/v1.6.0
+Source is also distributed in https://github.com/amarionfred/strata/tree/main/system/companion/src/main/assets/workspace/vendor/novnc
+
 Omalauncher: shared ThemeColors/Templates code.
 Copyright (c) 2026 Simon Schubert and contributors; MIT.
 The full notice is bundled in assets/OMALAUNCHER-LICENSE.txt.

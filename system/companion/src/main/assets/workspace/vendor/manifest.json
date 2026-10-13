@@ -1,0 +1,20 @@
+[
+  {
+    "name": "xterm.js 5.5.0",
+    "source": "https://registry.npmjs.org/@xterm/xterm/-/xterm-5.5.0.tgz",
+    "archive_sha256": "bd954fa721872170188cc5d7e83e88db3c83c9a18a4e8d24c2783d26491f59d2",
+    "license": "MIT"
+  },
+  {
+    "name": "addon-fit 0.10.0",
+    "source": "https://registry.npmjs.org/@xterm/addon-fit/-/addon-fit-0.10.0.tgz",
+    "archive_sha256": "917ac44972453d5eed52edc1e50260c76398ce48cf2290c2e60671102bba0b33",
+    "license": "MIT"
+  },
+  {
+    "name": "noVNC 1.6.0",
+    "source": "https://github.com/novnc/noVNC/archive/refs/tags/v1.6.0.tar.gz",
+    "archive_sha256": "5066103959ef4e9b10f37e5a148627360dd8414e4cf8a7db92bdbd022e728aaa",
+    "license": "MPL-2.0; bundled pako MIT"
+  }
+]

@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src data: blob:; connect-src 'none'; frame-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<link rel="stylesheet" href="vendor/xterm.css">
+<link rel="stylesheet" href="workspace.css">
+<title>Strata workspace</title>
+</head>
+<body>
+<header><strong id="title">Terminal</strong><span id="identity">Connecting…</span><button id="reconnect">Reconnect</button><button id="stop-workspace" aria-label="Stop all native sessions and services">Stop</button></header>
+<div id="notice" role="status" aria-live="polite"></div>
+<div id="setup" hidden><p>Prepare the native tools once, then reconnect. Sessions, files and services run with your Termux permissions.</p><button id="prepare">Prepare workspace</button></div>
+<section id="terminal-page" class="page" hidden>
+  <div class="toolbar"><select id="sessions" aria-label="Terminal session"></select><button id="new-session">+ Session</button><button id="close-session">Close</button></div>
+  <div id="terminal"></div>
+  <div id="keys" class="toolbar">
+    <button data-key="esc">Esc</button><button data-key="tab">Tab</button><button data-key="ctrl" id="ctrl">Ctrl</button><button data-key="up">↑</button><button data-key="down">↓</button><button data-key="left">←</button><button data-key="right">→</button><button id="copy">Copy</button><button id="paste">Paste</button>
+  </div>
+</section>
+<section id="files-page" class="page scroll" hidden>
+  <div class="toolbar"><button id="up">↑ Up</button><span id="path">~</span><button id="refresh-files">Refresh</button><button id="new-file">+ File</button><button id="new-folder">+ Folder</button><button id="import-file">Import</button></div>
+  <div id="entries"></div>
+  <div id="editor" hidden><div class="toolbar"><strong id="filename"></strong><button id="save-file">Save</button><button id="export-file">Export</button><button id="close-file">Close editor</button></div><textarea id="file-text" aria-label="File contents" spellcheck="false"></textarea><small>Files stay in your native home. Replaced content is backed up beside the file.</small></div>
+</section>
+<section id="software-page" class="page scroll" hidden>
+  <h2>Native packages</h2><p>Install programs into this workspace. Installation and repository prompts run in an embedded terminal.</p>
+  <form id="install-form"><input id="package" placeholder="python, git, nano…" aria-label="Package name" autocomplete="off"><button>Install</button></form>
+  <div class="toolbar"><button id="package-refresh">Refresh repositories</button><button id="package-list">Installed packages</button></div>
+  <p>Python, Bash, tmux, Git, curl and nano form the initial workspace. Other packages use the configured Termux repositories.</p>
+</section>
+<section id="services-page" class="page scroll" hidden>
+  <div class="toolbar"><h2>Native services</h2><button id="refresh-services">Refresh</button></div>
+  <p>Run a foreground command below. Started services continue when you leave Strata and restart when you reconnect after a runtime restart. Android can still stop Termux.</p>
+  <div id="services"></div>
+  <form id="service-form"><label>Name<input id="service-name" placeholder="web-server" pattern="[a-zA-Z0-9][a-zA-Z0-9_-]{0,39}" required></label><label>Command<textarea id="service-script" placeholder="exec python -m http.server 8080 --bind 127.0.0.1" required spellcheck="false"></textarea></label><button>Save service</button></form>
+  <pre id="service-log" hidden></pre>
+</section>
+<section id="desktop-page" class="page" hidden>
+  <div class="toolbar"><button id="start-desktop">Start / reconnect</button><button id="stop-desktop">Stop desktop</button><button id="install-desktop">Install graphical tools</button></div>
+  <form id="gui-form"><input id="gui-command" aria-label="Graphical program command" placeholder="aterm, geany…"><button>Launch</button><button type="button" id="desktop-keyboard">Keyboard</button></form>
+  <input id="desktop-input" aria-label="Desktop keyboard input" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Type here to send keys to the desktop" hidden>
+  <div id="desktop-display"></div>
+  <small>Native X11 programs · touch to click, two fingers to scroll. Install programs in Software. Android apps remain on Home.</small>
+</section>
+<dialog id="prompt"><form method="dialog"><label id="prompt-label" for="prompt-value"></label><input id="prompt-value" autocomplete="off"><div class="toolbar"><button value="cancel" formnovalidate>Cancel</button><button value="ok">Continue</button></div></form></dialog>
+<script src="vendor/xterm.js"></script><script src="vendor/addon-fit.js"></script><script src="workspace.js"></script>
+</body></html>

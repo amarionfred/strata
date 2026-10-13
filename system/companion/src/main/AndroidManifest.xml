@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools">
+    <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.SET_WALLPAPER" />
     <!-- WallpaperManager.getWallpaperInfo requires this on Android 13 and below; the service query is enough on 14+. -->
     <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" android:maxSdkVersion="33" tools:ignore="QueryAllPackagesPermission" />

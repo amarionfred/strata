@@ -7,6 +7,18 @@ it is not a device-qualified replacement OS. It preserves the no-flashing/no-unl
 no-VM constraints. It does not silently mark the original real-root, kernel
 control, or complete SystemUI replacement requirements as satisfied.
 
+## Native workspace in 0.6.0
+
+The stock-phone path now has embedded interactive terminals, persistent tmux
+sessions, files/editor, package terminals, user services, and an optional native
+X11 graphical session inside Strata. It uses no VM or PRoot. The original
+PRoot-coupled compositor remains preserved in `app/`; the shipped APK uses native
+Termux packages and the new authenticated session/display bridge. See
+[implementation and validation](NATIVE_WORKSPACE.md). Host and browser checks pass;
+phone validation and protected Android-surface integration remain outstanding.
+
+The sections below preserve the earlier architecture decisions and 0.5 baseline.
+
 ## Root integration in 0.5.0
 
 The app now connects to an existing root manager with a UID-checked `su` service

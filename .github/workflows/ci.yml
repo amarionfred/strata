@@ -19,6 +19,12 @@ jobs:
           bash -n install.sh
           python3 -m unittest discover -s scripts/tests -v
 
+      - name: Native workspace
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -yq tmux
+          python3 -m unittest discover -s system/workspace/tests -v
+
       - uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4
         with:
           distribution: temurin

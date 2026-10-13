@@ -30,6 +30,12 @@ final class TermuxBridge {
         return dispatch(context, "interactive", linux ? "Linux root terminal" : "Android root terminal", RootCommands.interactive(linux), true);
     }
     private static String dispatch(Activity context, String kind, String label, String script, boolean interactive) {
+        return dispatch(context, kind, label, script, interactive, null);
+    }
+    static String workspace(Activity context, String script, String input) {
+        return dispatch(context, "workspace", "Native workspace runtime", script, false, input);
+    }
+    private static String dispatch(Activity context, String kind, String label, String script, boolean interactive, String input) {
         if (!installed(context)) throw new IllegalStateException("Install and open Termux first, then connect it in Setup.");
         if (!permitted(context)) throw new IllegalStateException("Grant the Termux command permission in Setup.");
         String id = JobStore.create(context, kind, label);
@@ -48,6 +54,7 @@ final class TermuxBridge {
                 .putExtra("com.termux.RUN_COMMAND_SESSION_ACTION", "0")
                 .putExtra("com.termux.RUN_COMMAND_COMMAND_LABEL", label)
                 .putExtra("com.termux.RUN_COMMAND_PENDING_INTENT", callback);
+        if (input != null) command.putExtra("com.termux.RUN_COMMAND_STDIN", input);
         try {
             if (context.startService(command) == null) throw new IllegalStateException("Termux command service is unavailable.");
         } catch (RuntimeException e) {

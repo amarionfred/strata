@@ -1,7 +1,8 @@
 # Strata Android app
 
-Device root commands, native Linux packages and services, Termux terminals,
-Android apps, files, notifications, floating controls, and Omarchy themes. [Install](INSTALL.md).
+Embedded native terminals and graphics, packages, services, files, Android apps,
+notifications and Omarchy themes. Optional device-root administration is preserved.
+[Install](INSTALL.md).
 
 Android 10+. Shizuku is optional for Android controls. This app keeps Android
 installed and uses native processes. It uses an existing root manager; it does
@@ -34,9 +35,13 @@ use Alpine's `apk`; foreground services are syntax-checked and saved atomically.
 Restart Linux to apply service changes. Files and packages persist across restarts.
 The runtime requires Magisk and does not supply missing kernel capabilities.
 
-Termux commands use its `RUN_COMMAND` API. Jobs store output and exit codes locally;
-interactive shells open in Termux. Package installation uses Termux repositories.
-User overrides live in `~/.config/oma/session.sh`.
+The stock-phone workspace uses Termux's `RUN_COMMAND` API to start a native Python
+broker, then connects an embedded terminal/file/service/display frontend to it.
+Dedicated tmux sessions preserve programs across frontend reconnections. Packages
+use Termux repositories. Graphical programs use a private native Xvnc display with
+Openbox; no guest OS is installed. User overrides live in `~/.config/oma/session.sh`.
+Advanced root terminals keep their existing separate Termux path.
+[Implementation and validation](../../docs/NATIVE_WORKSPACE.md).
 
 Shizuku controls use a typed service for Wi-Fi, rotation, and device state.
 Notification access and floating controls are enabled separately in Setup.

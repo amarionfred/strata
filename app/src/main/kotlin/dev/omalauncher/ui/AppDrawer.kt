@@ -36,6 +36,8 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -73,6 +75,7 @@ import androidx.compose.ui.window.PopupProperties
 import androidx.compose.ui.graphics.ColorFilter
 import dev.omalauncher.AndroidApp
 import dev.omalauncher.androidAppKey
+import dev.omalauncher.androidShortcutKey
 import dev.omalauncher.AndroidShortcut
 import androidx.compose.runtime.collectAsState
 import dev.omalauncher.Runtime
@@ -257,7 +260,7 @@ internal fun AppPanel(
     // With a work profile, the empty bar lists one profile's apps at a time, as stock drawers' tabs do.
     val (tabs, tab) = shownTabs(runtime, state)
     val hidden = if (LauncherStyle.homeAppsInDrawer) emptySet() else runtime.widgets.shortcuts.items.mapNotNullTo(HashSet()) { shortcut ->
-        shortcut.component?.let { "a:" + androidAppKey(it, shortcut.profile) } ?: shortcut.linux?.let { AppHit.Linux(it).key }
+        shortcut.component?.let { "a:" + androidAppKey(it, shortcut.profile) } ?: shortcut.androidShortcut?.let { "s:" + androidShortcutKey(it, shortcut.profile) } ?: shortcut.linux?.let { AppHit.Linux(it).key }
     }
 
     val screenHeight = with(LocalDensity.current) { LocalConfiguration.current.screenHeightDp.dp.toPx() }

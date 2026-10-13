@@ -1,12 +1,13 @@
 # Upstream issue and PR audit — 2026-10-13
 
-Snapshot: 34 open issues and 26 open PRs. The tables below record implemented fixes, partial fixes, and remaining work. Closed issues and PRs are excluded.
+Initial snapshot: 34 open issues and 26 open PRs. Later upstream changes are recorded below. The tables below record implemented fixes, partial fixes, and remaining work. Closed issues and PRs are excluded.
 
 ## Applications and latest upstream
 
 - `app/`: original Compose launcher, optional Arch/PRoot, Wayland and OWL widgets.
 - `system/companion/`: native preview (`dev.omalauncher.systempreview`), Termux and optional Shizuku. Original-only fixes are not represented as preview features.
-- Main was fetched and merged through [`92ac947`](https://github.com/SimonSchubert/omalauncher/commit/92ac947), the missing store-preview demo-data commit. Prior local preview work was checkpointed first (`086c59c`); upstream merge is `9cbb6ba`.
+- Baseline main was fetched and merged through [`92ac947`](https://github.com/SimonSchubert/omalauncher/commit/92ac947), the missing store-preview demo-data commit. Prior local preview work was checkpointed first (`086c59c`); upstream merge is `9cbb6ba`.
+- Latest upstream checked at [`8dc7edd`](https://github.com/SimonSchubert/omalauncher/commit/8dc7edd). Store preview updates (`00ddabc`), browser shortcuts (`7029c9a`, #63), and per-package shortcut refresh (`8dc7edd`) are ported with the fork's private-profile guards.
 - Requested PRs were inspected on separate fetched refs, then cherry-picked or adapted. Repeated `gh pr checkout` would switch branches, not combine the five changes.
 
 ## Requested PRs
@@ -41,7 +42,7 @@ Snapshot: 34 open issues and 26 open PRs. The tables below record implemented fi
 | [#31: Feature idea: android.location source for widgets (GPS)](https://github.com/SimonSchubert/omalauncher/issues/31) | Pending: GPS/location source (#42) not imported. Original weather retains upstream manual city selection and now adapts #59 recovery/retry without dropping city support. |
 | [#33: Add Hermes Agent to the agent list, and allow a custom command per agent](https://github.com/SimonSchubert/omalauncher/issues/33) | Pending original agent registry/custom-agent integration (#85). Native preview already supports user-entered Termux commands; that is not validation of Hermes installation on Android. |
 | [#34: Feature proposal: permission-controlled external desktop bridge](https://github.com/SimonSchubert/omalauncher/issues/34) | Pending: draft #45 proposes an external display bridge. No host consent/session infrastructure has been merged. |
-| [#36: PWAs installed from Chrome/Brave never appear (no WebAPK, no shortcut)](https://github.com/SimonSchubert/omalauncher/issues/36) | Implemented in preview: system pin-shortcut confirmation, pinned shortcut listing and launching, private-profile rejection. Original app PR #63 remains pending; its catalog changes overlap #72 and need a separate privacy-aware port. |
+| [#36: PWAs installed from Chrome/Brave never appear (no WebAPK, no shortcut)](https://github.com/SimonSchubert/omalauncher/issues/36) | Implemented in preview: system pin-shortcut confirmation, pinned shortcut listing and launching, private-profile rejection. Original app #63 is now ported with private-profile rejection, stable profile routing, and targeted shortcut refresh; physical browser/profile tests remain. |
 | [#39: Feature idea: android.apps source (installed apps) and opt-in shared storage in Linux](https://github.com/SimonSchubert/omalauncher/issues/39) | Pending in original OWL: android.apps source and shared-storage API are not added. Preview app catalog uses LauncherApps; files use Android document selection. PR #4 needs privacy-aware adaptation. |
 | [#44: Local subnet access dropped on Android 17](https://github.com/SimonSchubert/omalauncher/issues/44) | Implemented for original target 37: permission declaration, install request, existing-install request and settings recovery. Gate starts at API 37 per Android docs. Preview targets 36; Termux owns its own network permissions. |
 | [#46: Expose ongoing navigation notifications (Google Maps turn-by-turn) to widgets](https://github.com/SimonSchubert/omalauncher/issues/46) | Implemented: original notification source retains navigation/other ongoing notifications, excluding own service and group summaries. Preview has live refresh, current-key revalidation, private-profile filtering and Android 14 pending-intent options. Device notification tests remain. |
@@ -82,7 +83,7 @@ The snapshot records exact head SHAs. Proposals deferred below were checked for 
 | [#59: Weather tile recovers from airplane mode](https://github.com/SimonSchubert/omalauncher/pull/59) | Adapted weather retry/cached forecast while preserving newer manual-city/URL-encoding behavior; version 1.2. Bundled widget compiler tests cover syntax, not a live wttr.in outage. |
 | [#60: notifications: expose a MessagingStyle conversation's messages](https://github.com/SimonSchubert/omalauncher/pull/60) | Reviewed proposal; not imported. MessagingStyle history does not implement the requested RemoteInput reply API (#24). |
 | [#61: Pick only bar](https://github.com/SimonSchubert/omalauncher/pull/61) | Reviewed branch metadata; not imported. Optional bar-only UI is not a bug fix and needs reconciliation with current home controls. |
-| [#63: Let apps pin shortcuts to home, like websites installed from a browser](https://github.com/SimonSchubert/omalauncher/pull/63) | Implemented equivalent system pinning in preview. Original PR not merged: conflicts with #72’s private-profile visibility and catalog generation checks require a dedicated port. |
+| [#63: Let apps pin shortcuts to home, like websites installed from a browser](https://github.com/SimonSchubert/omalauncher/pull/63) | Ported in the original app with Private Space rejection, stable profile routing and per-package refresh from `8dc7edd`. Equivalent pinning is also implemented in the preview. |
 | [#66: Match app names with their accents stripped](https://github.com/SimonSchubert/omalauncher/pull/66) | Cherry-picked with attribution (d7cf15f); accent-folded search regression tests. |
 | [#67: Offer Turnip GPU acceleration on Adreno phones](https://github.com/SimonSchubert/omalauncher/pull/67) | Reviewed proposal; pending Adreno driver/probe/device qualification. |
 | [#76: Harden work-app profile routing](https://github.com/SimonSchubert/omalauncher/pull/76) | Adapted stable serial re-resolution before actions, including personal-owner checks. Prevents old profile objects targeting a reused user ID. |

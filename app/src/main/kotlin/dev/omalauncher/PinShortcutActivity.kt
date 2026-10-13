@@ -27,6 +27,10 @@ class PinShortcutActivity : ComponentActivity() {
             return
         }
         val catalog = runtime.androidApps
+        if (!catalog.canPin(info)) {
+            finish()
+            return
+        }
         setContent {
             PinShortcutDialog(
                 label = shortcutLabel(info),

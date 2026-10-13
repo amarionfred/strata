@@ -1,0 +1,37 @@
+{
+  "date_utc": "2026-10-13",
+  "application_id": "dev.omalauncher.systempreview",
+  "version_name": "0.4.0-preview",
+  "version_code": 4,
+  "apk": "strata.apk",
+  "bytes": 2826634,
+  "sha256": "0375adc43a20fdf893e8a916fd15542e182ba1950d05000af772462391fde9b0",
+  "host_tests": {
+    "app": {
+      "tests": 119,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "owl": {
+      "tests": 82,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "system/companion": {
+      "tests": 23,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  },
+  "lint": {
+    "errors": 0,
+    "warnings": 14
+  },
+  "signing": "APK v2 verified; same preview certificate as 0.2 and 0.3",
+  "signer_sha256": "48e6c57d0d87daf1d0bbd8bbe0372c57eb584bd525fccd95f5092938dd10b04f",
+  "latest_upstream": "8dc7edd6c41f7344901813d979a812f0f94e6caf",
+  "device_validation": "Not installed or tested on a phone."
+}

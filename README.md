@@ -16,11 +16,6 @@ Requires Android 10 or newer. This is an early build; phone testing is still pen
 In **Themes**, pick a palette and tap **Apply to terminal**. **Install terminal tools** adds the listed packages.
 
 [Shizuku](https://shizuku.rikka.app/guide/setup/) is optional for Android controls.
-Notification access and floating controls can be enabled in Setup.
-
-Android stays installed. No flashing, reset, root, or VM is needed.
-The lock screen, system notification shade, and other apps keep their own UI.
-Strata does not grant root or kernel access.
 
 To remove it, choose another home app in Android settings, then uninstall Strata.
 

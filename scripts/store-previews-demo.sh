@@ -4,7 +4,9 @@
 # Assistant's states are files that curl reads, `curl` answers Cursor's dashboard, and
 # the Tesla tile reads its own fixture, go-limit reads an OpenCode database, `python3` answers
 # google-calendar's feed script, and two sleeping `claude` processes stand in for claude-top's
-# Claude Code instances. With "off", puts everything back.
+# Claude Code instances. `python` answers
+# codex-quota's and photoprism-random's scripts, widget-maker finds its script set up and a
+# draft waiting, and `ssh` streams a Flipper menu to flipper-zero. With "off", puts everything back.
 set -u
 demo=/tmp/store-previews-demo
 ha=~/.config/omarchy-proot/home-assistant
@@ -12,14 +14,21 @@ cursor=~/.config/cursor/auth.json
 tesla=~/.config/omarchy-tesla/fixture.json
 opencode=~/.local/share/opencode/opencode.db
 history=~/.claude/history.jsonl
+photoprism=~/.config/photoprism-random/session.json
+owlmaker=~/.local/share/owlmaker/VERSION
+owlstatus=~/.cache/owlmaker/status.json
+flipper=~/.config/owl-flipper/host
 
 # Moves a real file aside before the demo writes its own; "off" puts it back.
 aside() { [ -f "$1" ] && [ ! -f "$1.before-demo" ] && mv "$1" "$1.before-demo"; mkdir -p "${1%/*}"; }
 
 if [ "${1:-}" = off ]; then
   for p in $(cat "$demo/claude.pids" 2>/dev/null); do kill "$p" 2>/dev/null; rm -f ~/.claude/sessions/"$p".json; done
-  rm -rf "$demo" /usr/local/bin/gh /usr/local/bin/curl /usr/local/bin/python3 /usr/local/bin/pgrep
-  for f in "$ha" "$cursor" "$tesla" "$opencode" "$history"; do
+  pid=$(cat ~/.cache/owl-flipper/feed.pid 2>/dev/null) && kill -- "-$pid" 2>/dev/null
+  rm -f ~/.cache/owl-flipper/frame.json ~/.cache/photoprism-random/demo.jpg ~/.cache/owlmaker/pending/made-demo-moon.owl
+  rm -rf "$demo" /usr/local/bin/gh /usr/local/bin/curl /usr/local/bin/python3 /usr/local/bin/pgrep \
+    /usr/local/bin/python /usr/local/bin/claude /usr/local/bin/ssh
+  for f in "$ha" "$cursor" "$tesla" "$opencode" "$history" "$photoprism" "$owlmaker" "$owlstatus" "$flipper"; do
     [ -f "$f.before-demo" ] && mv "$f.before-demo" "$f" || rm -f "$f"
   done
   exit 0
@@ -158,3 +167,59 @@ fi
 exec /usr/bin/pgrep "$@"
 EOF
 chmod +x /usr/local/bin/pgrep
+
+# codex-quota and photoprism-random hand their script to `python -`: a Plus account part way
+# through both limits, and a photo of Moraine Lake (public domain, Wikimedia Commons).
+aside "$photoprism"
+echo '{"url": "https://photos.example.com", "username": "demo", "token": "demo", "preview": "public", "scope": "all", "album": ""}' > "$photoprism"
+mkdir -p ~/.cache/photoprism-random
+/usr/bin/curl -sf -A "omalauncher-store-previews" -o ~/.cache/photoprism-random/demo.jpg \
+  "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Moraine_Lake_17092005.jpg/960px-Moraine_Lake_17092005.jpg"
+cat > /usr/local/bin/python <<'EOF'
+#!/bin/sh
+if [ "$*" = - ]; then
+  s=$(cat)
+  now=$(date +%s)
+  case "$s" in
+    *wham/usage*) printf '{"five":{"pct":38,"reset":%s},"week":{"pct":61,"reset":%s},"plan":"plus","checked":%s,"error":null}\n' $((now + 7920)) $((now + 273600)) "$now"; exit 0 ;;
+    *photoprism-random*) echo ~/.cache/photoprism-random/demo.jpg; exit 0 ;;
+  esac
+  printf '%s\n' "$s" | exec /usr/bin/python -
+fi
+exec /usr/bin/python "$@"
+EOF
+chmod +x /usr/local/bin/python
+
+# widget-maker: its script set up, Claude Code on the PATH, and a finished draft waiting.
+aside "$owlmaker"
+echo 7 > "$owlmaker"
+printf '#!/bin/sh\nexit 0\n' > /usr/local/bin/claude
+chmod +x /usr/local/bin/claude
+mkdir -p ~/.cache/owlmaker/pending
+cat > ~/.cache/owlmaker/pending/made-demo-moon.owl <<'EOF'
+widget "moon phase" {
+  meta { description: "Tonight's moon phase as a big emoji with its name"; version: "1.0"; license: "MIT"; category: "time" }
+  Text { text: "🌔"; fontSize: 48; align: center }
+}
+EOF
+aside "$owlstatus"
+printf '{"state":"done","req":"moon phase as a big emoji with its name below","file":"made-demo-moon.owl","summary":"","error":"","agent":"claude","edit":"","t":%s}\n' "$(date +%s)" > "$owlstatus"
+
+# flipper-zero: `ssh` answers the bridge's stream with one frame of the main menu.
+aside "$flipper"
+echo flipper@desktop > "$flipper"
+/usr/bin/python3 - > "$demo/flipper.json" <<'PY'
+import json
+bits = bin(int("0000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000040000700000000000000000000000000401e03001ddc000000000000000000004033dbc036dbe0000000000000000000403cdb6fb0fac0000000000000000000400edb603ed9800000000000000000004026db6036db60000000000000000000403c7fc01fdfe00000000000000000004000000000000000000000000000000040000000000000000000000000000000400000000000000000000000000000004000000000000000000000000000000040000000000000000000000000000000400c73e0700000000000000000000000403cdb0031dc007dfbdf000000000000400c1bc036dbe036c18d800000000000400c33603cfac036f18d800000000000400c606038d9803cc18d800000000000400cda603cdb6036c18d800000000000403ffbc037dfe07be3df000000000000400000000000000000000000000000004000000000000000000000000000000043fffffffffffffffffffffffffffff847fffffffffffffffffffffffffffffce7fffffffffffffffffffffffffffffce7fffffffffffffffffffffffffffffce7c8061ffffffffffffffffffffffffce7c53c9ffffffffffffffffffffffffce7c50cfffffffffffffffffffffffffce7c93cfffffffffffffffffffffffffce7c93c9ffffffffffffffffffffffffce7cc1e3ffffffffffffffffffffffffce7fffffffffffffffffffffffffffffce3fffffffffffffffffffffffffffff8e0000000000000000000000000000000e0000000000000000000000000000000e0000000000000000000000000000000400000e0000003800000000000000000403c01800000018000000000000000004019b3eddcddc78000000000000000004018d98776776d8000000000000000004018d9861e63ed8000000000000000004018d98636630d800000000000000000403cdbef3ff1e7c00000000000000000400000000000000000000000000000004000000000000000000000000000000040000000000000000000000000000000400000000000000000000000000000004000000000000000000000000000000040000000000000000000000000000000401df3c70000000000000000000000004036d98d8000000000000000000000004030d98d800000000000000000000000403ef18d8000000000000000000000004036c18d800000000000000000000000401fe3c70000000000000000000000004000000000000000000000000000000040000000000000000000000000000000400000000000000000000000000000004000000000000000000000000000000040000000000000000000000000000000400000000000000000000000000000000", 16))[2:].zfill(8192)
+rows = ["".join("x" if b == "1" else "." for b in bits[i:i + 128]) for i in range(0, 8192, 128)]
+print(json.dumps({"ok": True, "connected": True, "name": "Flipper", "fw": "1.3.4", "battery": 84, "charging": False, "rows": rows}, separators=(",", ":")))
+PY
+cat > /usr/local/bin/ssh <<'EOF'
+#!/bin/sh
+case "$*" in
+  *"-O check"*) exit 0 ;;
+  */stream*) cat /tmp/store-previews-demo/flipper.json; exec sleep 600 ;;
+  *) exec /usr/bin/ssh "$@" ;;
+esac
+EOF
+chmod +x /usr/local/bin/ssh

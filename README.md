@@ -48,9 +48,8 @@ require a separate root grant for Termux. **Themes → Apply to terminal** appli
 the selected Omarchy colors and shell configs to Termux.
 
 [Shizuku](https://shizuku.rikka.app/guide/setup/) is optional for Android controls.
-Notification access and floating controls are enabled in Setup.
 
-To uninstall, choose another home app in Android settings, then remove Strata.
+To remove it, choose another home app in Android settings, then uninstall Strata.
 Removing the APK does not stop the Linux runtime or delete its files.
 
 ## Build

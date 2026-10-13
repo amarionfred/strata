@@ -2,6 +2,11 @@
 
 Checked on 2026-10-13.
 
+The Termux installer has seven passing host tests for checksum failures, failed
+downloads, release selection, and preserving existing configuration. Its live
+download and checksum steps were checked against the published 0.5.0 APK.
+Android's installation and permission dialogs still need phone testing.
+
 | Check | Result |
 | --- | --- |
 | Native app tests | 28 passed |

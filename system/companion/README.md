@@ -7,7 +7,9 @@ Android 10+. Shizuku is optional for Android controls. This app keeps Android
 installed and uses native processes. It uses an existing root manager; it does
 not root the phone or replace SystemUI.
 
-## Build
+## Build on a computer
+
+For phone installation, use the [Termux installer](../../README.md#install).
 
 Use JDK 25, Android SDK 36, and build-tools 36.0.0. From the repository root:
 

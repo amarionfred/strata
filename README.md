@@ -1,7 +1,13 @@
 # Strata
 
-Android home, root shell, native Linux packages and services, files, notifications,
-and Omarchy themes. Based on [Omalauncher](https://github.com/SimonSchubert/omalauncher).
+An Android home app and control panel connected to Termux, based on
+[Omalauncher](https://github.com/SimonSchubert/omalauncher).
+
+The current release does not deliver the intended integrated phone environment.
+Interactive terminals open in Termux. The separate native Linux runtime requires
+existing root and Magisk. Android's lock screen, system shade, settings, and other
+apps retain their own interfaces. Installing this APK or selecting it as the
+default home does not complete that integration.
 
 ## Install
 
@@ -26,9 +32,8 @@ when it matches the latest release. If a **Save file in ~/downloads/** or
 the command above. The APK does not need an editor.
 [Download the APK directly](https://github.com/amarionfred/strata/releases/latest/download/strata.apk) if you only want the app.
 
-Requires Android 10+. This is a preview; phone testing is pending. The complete
-phone interface is unfinished. Android's lock screen, system shade, and other
-apps still use their own UI.
+Requires Android 10+. APK installation has been reported on the Tecno KL4;
+runtime, permissions, and interface behavior still need device validation.
 
 ## Themes and controls
 

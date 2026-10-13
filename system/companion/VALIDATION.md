@@ -10,8 +10,10 @@ to Downloads. Failed copies preserve an existing APK and remove partial files. A
 commands are stubbed in these tests; they do not confirm a phone installation.
 The live download and checksum steps were checked against the published 0.5.0 APK.
 The Tecno screenshots confirm that download verification completed, but Android's
-installation window did not appear after the direct request. The Downloads fallback
-and installation/permission dialogs still need phone testing.
+installation window did not appear after the direct request. The user subsequently
+reported that the APK was installed. This confirms installation only, not command
+permissions, native runtime operation, or the intended integrated phone environment.
+The exact successful installation route was not independently observed.
 
 | Check | Result |
 | --- | --- |
@@ -42,8 +44,8 @@ APK SHA256:
 26e959b015d0af831dc6e45cc471a375465d27013836fda387c59d4c77686b8e
 ```
 
-The Tecno KL4 is still stock and unrooted. No successful phone installation has
-been confirmed. Root-manager grants/denials, module installation and startup,
+The Tecno KL4 is still stock and unrooted. APK installation is user-reported;
+root-manager grants/denials, module installation and startup,
 SELinux compatibility, interactive terminals, foreground-service lifecycle, and
 normal home/theme/notification behavior still need physical device testing.
 The complete phone interface is unfinished.

@@ -32,7 +32,7 @@
     "strata-runtime-0.5.0-arm64.zip": "4fbf967edc30f15a6234a28c6f2c7f472256f5f79ca3fd5f255341df91fedd67",
     "strata-runtime-0.5.0-x64.zip": "80cecc49b1cc5f1f200b9c53e1395e03057edceb8bf40eca8b0aceb258557da9"
   },
-  "device_validation": "Not installed or tested on a phone. Tecno KL4 remains stock and unrooted; root features unavailable.",
+  "device_validation": "User reported APK installation on the Tecno KL4 on 2026-10-13. Command permissions, native runtime operation, and interface behavior remain unverified. The phone remains stock and unrooted; root features unavailable. The installed app does not deliver the intended integrated phone environment.",
   "limitations": [
     "No universal root installation",
     "Runtime module requires existing Magisk",

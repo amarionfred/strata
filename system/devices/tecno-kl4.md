@@ -35,8 +35,11 @@ only to check privilege availability and did not execute because su was absent.
 The accepted baseline now combines native Termux commands/packages, Shizuku
 administration, and a shared interface in the separately identified
 [companion APK](../companion/README.md). It does not need root or a different
-filesystem. The phone was absent from ADB during implementation, so this APK,
-its dependency setup and its phone-wide panels have not been tested on the KL4.
+filesystem. The user reported successful APK installation on 2026-10-13 after
+installer troubleshooting. The installed app was correctly identified as an app,
+not the intended integrated phone environment. The phone was absent from ADB during
+implementation; dependency setup, command permissions, native runtime operation,
+and interface behavior remain unverified on the KL4.
 The root-only deployment decision below applies to the optional Magisk/chroot
 module, not to native Termux execution.
 

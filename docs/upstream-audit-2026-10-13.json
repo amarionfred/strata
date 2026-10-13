@@ -1,0 +1,455 @@
+{
+  "date": "2026-10-13",
+  "repository": "SimonSchubert/omalauncher",
+  "main": "92ac9476e7b76fe8eed777dcd64ce0dc8c41d2b1",
+  "issues": [
+    {
+      "number": 84,
+      "title": "speech() action / android.speech source: expose dictation to .owl widgets",
+      "url": "https://github.com/SimonSchubert/omalauncher/issues/84",
+      "updated_at": "2026-10-13T04:53:28Z",
+      "disposition": "Pending: a speech widget API is a new language/runtime capability; no implementation in this change."
+    },
+    {
+      "number": 82,
+      "title": "Option for see-through Linux windows and terminal tiles (show the wallpaper)",
+      "url": "https://github.com/SimonSchubert/omalauncher/issues/82",
+      "updated_at": "2026-10-12T21:44:03Z",
+      "disposition": "Pending: translucent Linux windows require compositor/rendering work. The native preview has no Wayland tiles."
+    },
+    {
+      "number": 81,
+      "title": "Codex CLI sandbox fails under OmaLauncher PRoot (\"cannot establish app-server socket mount isolation\")",
+      "url": "https://github.com/SimonSchubert/omalauncher/issues/81",
+      "updated_at": "2026-10-13T05:38:05Z",
+      "disposition": "Mitigated/documented: the legacy bwrap shim now refuses execution with exit 78 instead of silently discarding isolation. Genuine namespace sandbox support remains unavailable; see SECURITY.md. No bwrap/PRoot in the preview."
+    },
+    {
+      "number": 79,
+      "title": "Prompt bar voice input stops after a few words \u2014 need continuous dictation",
+      "url": "https://github.com/SimonSchubert/omalauncher/issues/79",
+      "updated_at": "2026-10-12T19:22:53Z",
+      "disposition": "Pending: continuous recognition/restart behavior needs a speech lifecycle implementation and microphone/device tests."
+    },
+    {
+      "number": 78,
+      "title": "Third-party voice typing apps (Wispr Flow, etc.) don't work inside Linux app windows like OpenCode",
+      "url": "https://github.com/SimonSchubert/omalauncher/issues/78",
+      "updated_at": "2026-10-12T19:22:48Z",
+      "disposition": "Partial: adapted draft PR #38 normal-editor IME metadata, extracted text, composing replacement and focus handling. Third-party voice keyboards still require physical tests; no universal compatibility claim."
+    },
+    {
+      "number": 73,
+      "title": "Stop switch for Linux service",
+      "url": "https://github.com/SimonSchubert/omalauncher/issues/73",
+      "updated_at": "2026-10-12T18:18:35Z",
+      "disposition": "Implemented in original app: stop/resume retains the rootfs, gates new guest processes, pauses Linux widgets/audio/service, waits for managed package work, and persists stop across launcher restart. Host gate tests pass; process termination/resume needs a phone test. Preview uses Termux lifecycle separately."
+    },
+    {
+      "number": 71,
+      "title": "[Security]: shared/store widgets can run arbitrary guest shell; review heuristics are bypassable",
+      "url": "https://github.com/SimonSchubert/omalauncher/issues/71",
+      "updated_at": "2026-10-13T05:45:47Z",
+      "disposition": "Partial: explicit shared/store widget trust notices and SECURITY.md. Regex/agent reviews are not isolation. Per-capability gates and reapproval after file changes are still missing. Preview does not load OWL/store widgets."
+    },
+    {
+      "number": 70,
+      "title": "Terminal tile only wakes when you tap the prompt",
+      "url": "https://github.com/SimonSchubert/omalauncher/issues/70",
+      "updated_at": "2026-10-12T17:15:50Z",
+      "disposition": "Pending: first-press vertical scrolling versus horizontal paging needs gesture arbitration. PR #40 handles simultaneous contacts, not this separate tile activation bug. No physical reproduction available."
+    },
+    {
+      "number": 69,
+      "title": "automatically apply the current theme\u2019s static background as the system (and lock) wallpaper",
+      "url": "https://github.com/SimonSchubert/omalauncher/issues/69",
+      "updated_at": "2026-10-12T17:15:54Z",
+      "disposition": "Implemented: #77 adapted to style.toml, opt-in automatic sync, explicit apply and truthful outcomes. Preview offers image or palette-color application. Preserves detected live home/lock wallpapers; bounded worker decode. Android/OEM wallpaper tests remain."
+    },
+    {
+      "number": 68,
+      "title": "Import home screen layout from another launcher (Samsung One UI Home)",
+      "url": "https://github.com/SimonSchubert/omalauncher/issues/68",
+      "updated_at": "2026-10-12T16:08:14Z",
+      "disposition": "Pending: import format/mapping and migration preview for other launchers are not implemented."
+    },
+    {
+      "number": 65,
+      "title": "Feature idea: voice typing and swipe keyboard in terminal tiles (agent sessions)",
+      "url": "https://github.com/SimonSchubert/omalauncher/issues/65",
+      "updated_at": "2026-10-13T02:22:10Z",
+      "disposition": "Partial: same keyboard changes as #78. Swipe/dictation reliability still depends on IME and must be checked physically."
+    },
+    {
+      "number": 64,
+      "title": "Feature idea: trending widgets, likes and reviews in the store",
+      "url": "https://github.com/SimonSchubert/omalauncher/issues/64",
+      "updated_at": "2026-10-12T14:30:17Z",
+      "disposition": "Pending: popularity/likes/reviews require a hosted service, identity/abuse rules and a client protocol; not present in this repository."
+    },
+    {
+      "number": 57,
+      "title": "Feature proposal: encrypted layered backup/restore (SAF/WebDAV + incremental daily/hourly)",
+      "url": "https://github.com/SimonSchubert/omalauncher/issues/57",
+      "updated_at": "2026-10-12T19:03:36Z",
+      "disposition": "Pending: encrypted, scheduled, layered/WebDAV backups need design, migration and restore verification. No backup encryption claims."
+    },
+    {
+      "number": 49,
+      "title": "Improvement idea: make the widgets dynamically move around",
+      "url": "https://github.com/SimonSchubert/omalauncher/issues/49",
+      "updated_at": "2026-10-12T07:34:39Z",
+      "disposition": "Integrated #55: live displacement while dragging, bounded search, preserved sizes, algorithm regression tests. Physical drag behavior remains unverified."
+    },
+    {
+      "number": 46,
+      "title": "Expose ongoing navigation notifications (Google Maps turn-by-turn) to widgets",
+      "url": "https://github.com/SimonSchubert/omalauncher/issues/46",
+      "updated_at": "2026-10-12T06:33:34Z",
+      "disposition": "Implemented: original notification source retains navigation/other ongoing notifications, excluding own service and group summaries. Preview has live refresh, current-key revalidation, private-profile filtering and Android 14 pending-intent options. Device notification tests remain."
+    },
+    {
+      "number": 44,
+      "title": "Local subnet access dropped on Android 17",
+      "url": "https://github.com/SimonSchubert/omalauncher/issues/44",
+      "updated_at": "2026-10-12T04:22:26Z",
+      "disposition": "Implemented for original target 37: permission declaration, install request, existing-install request and settings recovery. Gate starts at API 37 per Android docs. Preview targets 36; Termux owns its own network permissions."
+    },
+    {
+      "number": 39,
+      "title": "Feature idea: android.apps source (installed apps) and opt-in shared storage in Linux",
+      "url": "https://github.com/SimonSchubert/omalauncher/issues/39",
+      "updated_at": "2026-10-12T00:49:39Z",
+      "disposition": "Pending in original OWL: android.apps source and shared-storage API are not added. Preview app catalog uses LauncherApps; files use Android document selection. PR #4 needs privacy-aware adaptation."
+    },
+    {
+      "number": 36,
+      "title": "PWAs installed from Chrome/Brave never appear (no WebAPK, no shortcut)",
+      "url": "https://github.com/SimonSchubert/omalauncher/issues/36",
+      "updated_at": "2026-10-11T23:42:51Z",
+      "disposition": "Implemented in preview: system pin-shortcut confirmation, pinned shortcut listing and launching, private-profile rejection. Original app PR #63 remains pending; its catalog changes overlap #72 and need a separate privacy-aware port."
+    },
+    {
+      "number": 34,
+      "title": "Feature proposal: permission-controlled external desktop bridge",
+      "url": "https://github.com/SimonSchubert/omalauncher/issues/34",
+      "updated_at": "2026-10-11T22:36:52Z",
+      "disposition": "Pending: draft #45 proposes an external display bridge. No host consent/session infrastructure has been merged."
+    },
+    {
+      "number": 33,
+      "title": "Add Hermes Agent to the agent list, and allow a custom command per agent",
+      "url": "https://github.com/SimonSchubert/omalauncher/issues/33",
+      "updated_at": "2026-10-13T08:00:38Z",
+      "disposition": "Pending original agent registry/custom-agent integration (#85). Native preview already supports user-entered Termux commands; that is not validation of Hermes installation on Android."
+    },
+    {
+      "number": 31,
+      "title": "Feature idea: android.location source for widgets (GPS)",
+      "url": "https://github.com/SimonSchubert/omalauncher/issues/31",
+      "updated_at": "2026-10-12T14:20:14Z",
+      "disposition": "Pending: GPS/location source (#42) not imported. Original weather retains upstream manual city selection and now adapts #59 recovery/retry without dropping city support."
+    },
+    {
+      "number": 27,
+      "title": "App Tray",
+      "url": "https://github.com/SimonSchubert/omalauncher/issues/27",
+      "updated_at": "2026-10-11T21:22:34Z",
+      "disposition": "Already present in current upstream: the drawer search-position/top ordering setting. #32 adapted keyboard/pinning/filter/drag-edge behaviors retain it."
+    },
+    {
+      "number": 25,
+      "title": "Feature idea: an Omarchy-style control and notification panel on swipe down?",
+      "url": "https://github.com/SimonSchubert/omalauncher/issues/25",
+      "updated_at": "2026-10-11T19:58:20Z",
+      "disposition": "Partial in preview: existing controls, inbox and floating panel share Omarchy colors; inbox corrected here. Android secure shade/lock/recents replacement and a unified system panel remain outside what this APK implements."
+    },
+    {
+      "number": 24,
+      "title": "Feature idea: reply to a notification from a widget",
+      "url": "https://github.com/SimonSchubert/omalauncher/issues/24",
+      "updated_at": "2026-10-11T19:56:59Z",
+      "disposition": "Pending: RemoteInput reply and OWL language validation are not implemented. Opening a notification is not an inline reply."
+    },
+    {
+      "number": 23,
+      "title": "App names don't update after changing the phone's language",
+      "url": "https://github.com/SimonSchubert/omalauncher/issues/23",
+      "updated_at": "2026-10-11T20:08:42Z",
+      "disposition": "Implemented: original catalog reloads labels/icons on locale change, date formatter cache keys include locale, notification label keys include locale. Preview refreshes labels on locale broadcasts. Locale-switch host regression added; Android broadcast behavior needs device testing."
+    },
+    {
+      "number": 22,
+      "title": "Accent-insensitive app search?",
+      "url": "https://github.com/SimonSchubert/omalauncher/issues/22",
+      "updated_at": "2026-10-11T20:38:23Z",
+      "disposition": "Integrated #66 in original; preview uses equivalent Unicode normalization for label and package search. Accent and non-Latin host cases pass."
+    },
+    {
+      "number": 20,
+      "title": "Guest DNS ignores Android's active network (breaks Tailscale/MagicDNS and any VPN)",
+      "url": "https://github.com/SimonSchubert/omalauncher/issues/20",
+      "updated_at": "2026-10-11T19:46:13Z",
+      "disposition": "Pending in legacy PRoot: hardcoded guest DNS remains; active-network/VPN/Private-DNS integration needs a resolver bridge and network tests. Preview has no guest resolv.conf override and uses native Termux/Android networking; VPN behavior is still unqualified."
+    },
+    {
+      "number": 16,
+      "title": "Small security basics: SECURITY.md, Dependabot, and CI hardening?",
+      "url": "https://github.com/SimonSchubert/omalauncher/issues/16",
+      "updated_at": "2026-10-11T19:24:35Z",
+      "disposition": "Partial: SECURITY.md, immutable GitHub Action pins, read-default/job-scoped release permissions, Dependabot and native-preview CI. Hosting-side alerts/protection/private reporting are not configured from this local fork. Legacy download trust still needs work."
+    },
+    {
+      "number": 15,
+      "title": "Feature idea: GPU acceleration on Adreno (Snapdragon) phones via Mesa Turnip",
+      "url": "https://github.com/SimonSchubert/omalauncher/issues/15",
+      "updated_at": "2026-10-11T21:32:55Z",
+      "disposition": "Pending: #67 Turnip driver support needs Adreno hardware, verified driver integration and rollback testing. No kernel/driver changes were made on the Tecno."
+    },
+    {
+      "number": 11,
+      "title": "Would you welcome a CONTRIBUTING.md and issue/PR templates?",
+      "url": "https://github.com/SimonSchubert/omalauncher/issues/11",
+      "updated_at": "2026-10-11T20:24:22Z",
+      "disposition": "Implemented: CONTRIBUTING.md, bug/feature templates and PR template, with separate build/device guidance for the two applications."
+    },
+    {
+      "number": 8,
+      "title": "Feature idea: a small page indicator on home?",
+      "url": "https://github.com/SimonSchubert/omalauncher/issues/8",
+      "updated_at": "2026-10-11T16:16:45Z",
+      "disposition": "Pending: configurable page indicators are not added."
+    },
+    {
+      "number": 7,
+      "title": "Hide the \"no widgets on this page\" hint outside arrange mode?",
+      "url": "https://github.com/SimonSchubert/omalauncher/issues/7",
+      "updated_at": "2026-10-11T15:50:58Z",
+      "disposition": "Implemented in original app: empty-page hints appear while arranging/carrying or when the whole home is empty; intentionally blank pages stay clear."
+    },
+    {
+      "number": 5,
+      "title": "Terminal widget restarts on its own after `exit`",
+      "url": "https://github.com/SimonSchubert/omalauncher/issues/5",
+      "updated_at": "2026-10-11T15:51:35Z",
+      "disposition": "Implemented in original app: first-appearance gate prevents automatic restart after exit when a tile re-enters composition. Explicit tap still restarts. Lifecycle host tests pass."
+    },
+    {
+      "number": 3,
+      "title": "More App bar Customization",
+      "url": "https://github.com/SimonSchubert/omalauncher/issues/3",
+      "updated_at": "2026-10-11T14:53:38Z",
+      "disposition": "Pending: configurable bottom-strip pins (#18) are not imported; existing home pinning remains."
+    }
+  ],
+  "pulls": [
+    {
+      "number": 85,
+      "title": "feat(agents): add Hermes, and let a user's own command count as an agent",
+      "url": "https://github.com/SimonSchubert/omalauncher/pull/85",
+      "head": "c10966dcb71975415d0d12cba9299a07b2087ec8",
+      "draft": false,
+      "disposition": "Reviewed proposal; pending. Adds remote installer and custom agent lifecycle; native preview is not the original agent registry."
+    },
+    {
+      "number": 77,
+      "title": "Optionally apply theme background as system and lock-screen wallpaper",
+      "url": "https://github.com/SimonSchubert/omalauncher/pull/77",
+      "head": "baaec9ce6788260987576d98bd6502929269593e",
+      "draft": false,
+      "disposition": "Adapted manually. Original uses current style.toml and opt-in sync; preview uses explicit apply. Live-wallpaper guards, bounded decode and truthful system/lock results replace the patch\u2019s unconditional success report."
+    },
+    {
+      "number": 76,
+      "title": "Harden work-app profile routing",
+      "url": "https://github.com/SimonSchubert/omalauncher/pull/76",
+      "head": "236c698574ffc9cb33840efbed4634d201d16882",
+      "draft": false,
+      "disposition": "Adapted stable serial re-resolution before actions, including personal-owner checks. Prevents old profile objects targeting a reused user ID."
+    },
+    {
+      "number": 72,
+      "title": "Support Android Private Space in a dedicated drawer tab",
+      "url": "https://github.com/SimonSchubert/omalauncher/pull/72",
+      "head": "0d89ad17a8b7a2adff7a194ea3bc1520751e6336",
+      "draft": false,
+      "disposition": "Cherry-picked with attribution (5fd848e), then hardened stable serial routing, role checks and pause-time cache purge. Equivalent preview catalog implemented separately. Android 15+ device checks outstanding."
+    },
+    {
+      "number": 67,
+      "title": "Offer Turnip GPU acceleration on Adreno phones",
+      "url": "https://github.com/SimonSchubert/omalauncher/pull/67",
+      "head": "a64b3ec69a0ab35115899ec735354cd50e70c246",
+      "draft": false,
+      "disposition": "Reviewed proposal; pending Adreno driver/probe/device qualification."
+    },
+    {
+      "number": 66,
+      "title": "Match app names with their accents stripped",
+      "url": "https://github.com/SimonSchubert/omalauncher/pull/66",
+      "head": "e4beae6991d93976f5639613b656984e3a557722",
+      "draft": false,
+      "disposition": "Cherry-picked with attribution (d7cf15f); accent-folded search regression tests."
+    },
+    {
+      "number": 63,
+      "title": "Let apps pin shortcuts to home, like websites installed from a browser",
+      "url": "https://github.com/SimonSchubert/omalauncher/pull/63",
+      "head": "b3383413a7bc2987b57bcebe9752947a2d498f2e",
+      "draft": false,
+      "disposition": "Implemented equivalent system pinning in preview. Original PR not merged: conflicts with #72\u2019s private-profile visibility and catalog generation checks require a dedicated port."
+    },
+    {
+      "number": 61,
+      "title": "Pick only bar",
+      "url": "https://github.com/SimonSchubert/omalauncher/pull/61",
+      "head": "d224b53cef05688a3fe2a81bc29871b21905c81d",
+      "draft": false,
+      "disposition": "Reviewed branch metadata; not imported. Optional bar-only UI is not a bug fix and needs reconciliation with current home controls."
+    },
+    {
+      "number": 60,
+      "title": "notifications: expose a MessagingStyle conversation's messages",
+      "url": "https://github.com/SimonSchubert/omalauncher/pull/60",
+      "head": "2e66b37583255fce6c365b2d0de8b9e2ddd4d186",
+      "draft": false,
+      "disposition": "Reviewed proposal; not imported. MessagingStyle history does not implement the requested RemoteInput reply API (#24)."
+    },
+    {
+      "number": 59,
+      "title": "Weather tile recovers from airplane mode",
+      "url": "https://github.com/SimonSchubert/omalauncher/pull/59",
+      "head": "1d41b0b0f27d1bb18295521c0da6c3d5611ba819",
+      "draft": false,
+      "disposition": "Adapted weather retry/cached forecast while preserving newer manual-city/URL-encoding behavior; version 1.2. Bundled widget compiler tests cover syntax, not a live wttr.in outage."
+    },
+    {
+      "number": 58,
+      "title": "Keep Claude Code's background daemon in a proot of its own",
+      "url": "https://github.com/SimonSchubert/omalauncher/pull/58",
+      "head": "155ff38cb94f7650cc041e3eee497e2dde7f5cf8",
+      "draft": false,
+      "disposition": "Not imported. Author states dependency on unmerged PRoot changes and untested daemon behavior; conflicts with the preview\u2019s native/no-PRoot direction."
+    },
+    {
+      "number": 55,
+      "title": "Add live widget reordering while dragging",
+      "url": "https://github.com/SimonSchubert/omalauncher/pull/55",
+      "head": "07785a2604b0397805f43999b14f5fd3dcbd99b4",
+      "draft": false,
+      "disposition": "Cherry-picked with attribution (9894de7). Host reordering tests; physical drags pending."
+    },
+    {
+      "number": 54,
+      "title": "Show the private space, locked and unlocked",
+      "url": "https://github.com/SimonSchubert/omalauncher/pull/54",
+      "head": "f236001b074b8cb45aad86267edb0f4508cb2022",
+      "draft": false,
+      "disposition": "Not imported: alternative private-space design keeps pinned private apps visible. #72 chosen for stricter separation and locking instead."
+    },
+    {
+      "number": 51,
+      "title": "Take a deleted profile\u2019s apps off the home screen",
+      "url": "https://github.com/SimonSchubert/omalauncher/pull/51",
+      "head": "1c556ffe2d15d4af0fd703df1c97aa3b503140b3",
+      "draft": false,
+      "disposition": "Adapted cleanup after confirmed profile-removal broadcasts; temporary role/visibility failures do not erase saved layout. Stale inaccessible shortcuts stay hidden."
+    },
+    {
+      "number": 47,
+      "title": "Request ACCESS_LOCAL_NETWORK for target SDK 37 LAN access",
+      "url": "https://github.com/SimonSchubert/omalauncher/pull/47",
+      "head": "e974a96b8267f43f5569f268c3d45960ed0524af",
+      "draft": false,
+      "disposition": "Adapted manifest and API-37 install permission request plus existing-install settings actions and host API gate tests."
+    },
+    {
+      "number": 45,
+      "title": "Add consent-controlled external display bridge",
+      "url": "https://github.com/SimonSchubert/omalauncher/pull/45",
+      "head": "608c29df36803fb07855a2cbf654da87404efea6",
+      "draft": true,
+      "disposition": "Not imported: large draft provider/host protocol requiring Binder caller/session/consent and external-display tests."
+    },
+    {
+      "number": 42,
+      "title": "Weather device location",
+      "url": "https://github.com/SimonSchubert/omalauncher/pull/42",
+      "head": "529719090add0b5815177652a7c9c6c7939dea4e",
+      "draft": false,
+      "disposition": "Not imported: location permission and widget source require privacy-aware capability review; manual city remains supported."
+    },
+    {
+      "number": 41,
+      "title": "Offer the wallpaper picker from the home menu with your own image first",
+      "url": "https://github.com/SimonSchubert/omalauncher/pull/41",
+      "head": "94e2f640d8982b5a9c86bb171375347932898680",
+      "draft": false,
+      "disposition": "Not imported into original: convenience wallpaper-picker ordering/menu changes. Preview now has image selection in Themes."
+    },
+    {
+      "number": 40,
+      "title": "Preserve simultaneous Wayland touch contacts and cancellation",
+      "url": "https://github.com/SimonSchubert/omalauncher/pull/40",
+      "head": "75b4489e70fafb7dfd87b910cede646f470fe78f",
+      "draft": true,
+      "disposition": "Cherry-picked with attribution (b576db3). Draft upstream; touch IDs/contact frames/cancellation preserved. Host ID tests; simultaneous physical touches unverified."
+    },
+    {
+      "number": 38,
+      "title": "Improve keyboard dictation input for Linux windows",
+      "url": "https://github.com/SimonSchubert/omalauncher/pull/38",
+      "head": "185a623c753517748b911fb08a172e085ef5fdb4",
+      "draft": true,
+      "disposition": "Keyboard.kt adapted from this draft; retains normal-editor semantics without password classification, supports extracted text/replacement, avoids empty-delete backspace and permits real editors to retain focus. Device IME tests pending."
+    },
+    {
+      "number": 37,
+      "title": "Open the Arch files with any Android app through SAF",
+      "url": "https://github.com/SimonSchubert/omalauncher/pull/37",
+      "head": "b1108808741cf1f8c22c8bcafba9296122132d8d",
+      "draft": false,
+      "disposition": "Not imported: new writable guest DocumentsProvider needs traversal/symlink/grant and provider lifecycle tests. Preview uses existing Android/Termux document providers."
+    },
+    {
+      "number": 32,
+      "title": "Make the app drawer easier to browse and to open",
+      "url": "https://github.com/SimonSchubert/omalauncher/pull/32",
+      "head": "d95866f81f04d1839db7f59674df662fff6599b3",
+      "draft": false,
+      "disposition": "Adapted manually. Configurable keyboard and hiding home apps; pinning leaves drawer open; dismissal begins only from the scroll edge. Existing upstream swipe-up/top ordering retained."
+    },
+    {
+      "number": 30,
+      "title": "Put Android app widgets on the home pages",
+      "url": "https://github.com/SimonSchubert/omalauncher/pull/30",
+      "head": "b257832ee0f099bbccb5744a766f61abc7f5fd0d",
+      "draft": false,
+      "disposition": "Not imported: Android AppWidgetHost is substantial new lifecycle/persistence infrastructure and must respect private profiles."
+    },
+    {
+      "number": 19,
+      "title": "Add gesture navigation and the launcher's own recents",
+      "url": "https://github.com/SimonSchubert/omalauncher/pull/19",
+      "head": "36fb2000745f21088d1dd92b21b78180d8a1e975",
+      "draft": false,
+      "disposition": "Not imported: accessibility/navigation and screenshot-based recents need device testing and conflict with claiming replacement of protected Android UI."
+    },
+    {
+      "number": 18,
+      "title": "feat(home): pin apps to the bottom bar and size icons to fit (#3)",
+      "url": "https://github.com/SimonSchubert/omalauncher/pull/18",
+      "head": "71f0ebfdaa32ca82da9e9ab47bd903de6cbe8f96",
+      "draft": false,
+      "disposition": "Not imported: bottom-strip persistence/style migration must be reconciled with private-profile exclusions and #32."
+    },
+    {
+      "number": 4,
+      "title": "Expose installed Android apps to widgets as android.apps",
+      "url": "https://github.com/SimonSchubert/omalauncher/pull/4",
+      "head": "293da8e00b39eddd59bc9055befa65e1245db406",
+      "draft": false,
+      "disposition": "Not imported: older android.apps proposal lacks the integrated private-space policy. Exposing a new widget data source needs matching filters."
+    }
+  ]
+}

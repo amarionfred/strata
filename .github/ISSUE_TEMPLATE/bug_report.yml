@@ -1,0 +1,28 @@
+name: Bug report
+description: A reproducible problem in the launcher or native preview
+body:
+  - type: input
+    id: version
+    attributes:
+      label: Application ID and version
+      placeholder: dev.omalauncher.systempreview 0.3.0-preview
+    validations:
+      required: true
+  - type: input
+    id: device
+    attributes:
+      label: Phone, Android version and ROM/build
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps, expected result and actual result
+      description: Mention personal/work/clone/private profiles when relevant. Redact personal data from logs.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Reproduction evidence
+      description: Include only relevant redacted logs and checks already performed.

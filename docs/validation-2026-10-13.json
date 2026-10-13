@@ -1,0 +1,45 @@
+{
+  "date_utc": "2026-10-13",
+  "application_id": "dev.omalauncher.systempreview",
+  "version_name": "0.3.0-preview",
+  "version_code": 3,
+  "minimum_android_api": 29,
+  "target_android_api": 36,
+  "apk": "/home/park/Projects/omalauncher/.local/companion/oma-system-preview-0.3.0.apk",
+  "download_copy": "/home/park/Downloads/Oma-System-Preview-0.3.0.apk",
+  "bytes": 2986631,
+  "sha256": "269dec11f315f1526d00667f11c95eb9ce5540840fd9e28fd370f9a550aa8f28",
+  "host_tests": {
+    "app": {
+      "tests": 116,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "owl": {
+      "tests": 82,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "system/companion": {
+      "tests": 23,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  },
+  "lint": {
+    "Error": 0,
+    "Fatal": 0,
+    "Warning": 14
+  },
+  "omarchy_revision": "8b4eae66da2938ba9559f103b18dbf85cdf28a70",
+  "verified_config_files": 17,
+  "bundled_palettes": 22,
+  "signing": "APK v2 verified; Android debug key matches preview 0.2",
+  "signer_sha256": "48e6c57d0d87daf1d0bbd8bbe0372c57eb584bd525fccd95f5092938dd10b04f",
+  "device_validation": "Not installed/tested. adb devices -l lists no devices during this audit.",
+  "physical_device_modified": false,
+  "root_or_bootloader_operations": false
+}

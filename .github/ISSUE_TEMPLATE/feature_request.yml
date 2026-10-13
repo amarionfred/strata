@@ -1,0 +1,15 @@
+name: Feature request
+description: Propose a behavior and describe its intended use
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What should the user be able to do?
+      description: Name the affected application and a concrete example.
+    validations:
+      required: true
+  - type: textarea
+    id: constraints
+    attributes:
+      label: Device requirements and constraints
+      description: State which Android APIs or privileges the proposed behavior needs, if known.

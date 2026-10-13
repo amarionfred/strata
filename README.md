@@ -10,6 +10,9 @@ is retained in [system/README.md](system/README.md) for already-rooted devices.
 The preview now connects the launcher's 22 Omarchy palettes and portable terminal
 configs; follow its [installation guide](system/companion/INSTALL.md).
 The Android app described below remains the upstream launcher pending migration.
+The [upstream audit](docs/UPSTREAM_AUDIT.md) records all 34 open issues and 26 PRs,
+including the five requested integrations and what is still unfinished. Read
+[SECURITY.md](SECURITY.md) for shared-widget trust and the legacy sandbox limitation.
 
 An Android home screen with the look of [Omarchy](https://omarchy.org), and an
 optional Arch Linux ARM system next to your phone apps. Omalauncher runs the

@@ -12,9 +12,9 @@ pkg install -y curl && curl -fL https://raw.githubusercontent.com/amarionfred/st
 ```
 
 It works from any folder, including Downloads. No Java, Gradle, or source download is needed.
-The script downloads the APK, checks its checksum, configures Termux, and opens Android's installer.
+The script downloads the APK, checks its checksum, configures Termux, and opens the app chooser.
 
-1. If Android asks, allow installs from Termux. Tap **Install**, then **Open**.
+1. In **Open with**, choose **Package installer**, not Termux. Allow installs from Termux if asked, then tap **Install** or **Update**, followed by **Open**.
 2. In **Strata → Setup**, tap **Grant command permission** and allow it.
 3. Tap **Choose default home** and select **Strata**.
 

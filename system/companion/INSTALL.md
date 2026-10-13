@@ -7,10 +7,10 @@ pkg install -y curl && curl -fL https://raw.githubusercontent.com/amarionfred/st
 ```
 
 The script downloads the published APK, verifies it, enables the Termux connection,
-and opens Android's installer. Existing Termux settings are kept; changed settings
+and opens the app chooser. Existing Termux settings are kept; changed settings
 are backed up beside `termux.properties` as `termux.properties.strata-backup`.
 
-1. Allow installs from Termux if Android asks, then tap **Install → Open**.
+1. In **Open with**, choose **Package installer**, not Termux. Allow installs from Termux if asked, then tap **Install** or **Update**, followed by **Open**.
 2. In **Strata → Setup**, tap **Grant command permission → Allow**.
 3. Tap **Choose default home** and select **Strata**.
 
@@ -19,7 +19,8 @@ Run the same command to update. Existing app data is kept.
 
 ## If installation stops
 
-- No installer appeared: run `termux-open --view --content-type application/vnd.android.package-archive ~/.cache/strata/strata.apk`.
+- No installer appeared: run `termux-open --chooser --view --content-type application/vnd.android.package-archive ~/.cache/strata/strata.apk`, then choose **Package installer**.
+- A **Save file in ~/downloads/** dialog appeared: this is Termux's file receiver. **OPEN DIRECTORY** saves the APK and returns to Termux. Run `termux-open --chooser --view --content-type application/vnd.android.package-archive ~/downloads/strata.apk`, then choose **Package installer**. The keyboard checkmark does not install the app.
 - Download or checksum failed: check your connection and run the installation command again.
 - Android blocked installation: allow **Install unknown apps** for Termux, then reopen the APK with the command above.
 - Terminal commands fail: in Strata's Setup tab, tap **Grant command permission**, then **Verify Termux connection**. Reopen Termux if needed.

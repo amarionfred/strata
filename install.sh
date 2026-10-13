@@ -115,13 +115,13 @@ main() {
     mv -f -- "$strata_stage/strata.apk" "$apk"
     printf '\nAPK verified. Connecting Termux…\n'
     connect_termux "$HOME"
-    printf '\n1. Allow installs from Termux if Android asks, then tap Install.\n'
+    printf '\n1. Choose Package installer in Open with. Allow installs from Termux if asked, then tap Install or Update.\n'
     printf '2. Open Strata → Setup → Grant command permission → Allow.\n'
     printf '3. Tap Choose default home and select Strata.\n'
-    printf '\nOpening Android’s installer. APK saved at %s\n' "$apk"
-    printf 'If no installer appears, run: termux-open --view --content-type application/vnd.android.package-archive %q\n' "$apk"
-    termux-open --view --content-type application/vnd.android.package-archive "$apk" \
-        || fail 'Android’s installer could not be opened. Use the termux-open command printed above.'
+    printf '\nOpening the app chooser. Select Package installer, not Termux. APK saved at %s\n' "$apk"
+    printf 'If no chooser appears, run: termux-open --chooser --view --content-type application/vnd.android.package-archive %q\n' "$apk"
+    termux-open --chooser --view --content-type application/vnd.android.package-archive "$apk" \
+        || fail 'The app chooser could not be opened. Use the termux-open command printed above.'
 }
 
 if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then main "$@"; fi

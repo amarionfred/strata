@@ -1,0 +1,6 @@
+id=oma_native_system
+name=Oma native system runtime (developer preview)
+version=0.1.0
+versionCode=1
+author=Omalauncher fork contributors
+description=Native Linux filesystem and services on Android's existing kernel. Root required. SystemUI integration is not included in this preview.

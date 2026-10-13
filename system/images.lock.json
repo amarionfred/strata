@@ -1,0 +1,21 @@
+{
+  "release": "3.24.2",
+  "images": {
+    "arm64": {
+      "alpine_arch": "aarch64",
+      "target": "aarch64-linux-musl",
+      "sha256": "9bf70a7f18ea44094cbb5f70c58f9af129c8214745743db0e68e5502cc2ce773"
+    },
+    "arm": {
+      "alpine_arch": "armv7",
+      "target": "arm-linux-musleabihf",
+      "cpu": "cortex_a7",
+      "sha256": "5552f1ef2398cee46ef2cf733f8f1258f39a77ad065dfd47282fc0df9fe1976c"
+    },
+    "x64": {
+      "alpine_arch": "x86_64",
+      "target": "x86_64-linux-musl",
+      "sha256": "c5ca053cfe1d85c5b96dff8b9bc57045f7f184a30ffb6b65776409ca90388677"
+    }
+  }
+}

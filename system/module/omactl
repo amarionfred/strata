@@ -1,0 +1,98 @@
+#!/system/bin/sh
+if [ "${OMA_BUSYBOX_SHELL:-}" != 1 ]; then
+    export OMA_BUSYBOX_SHELL=1
+    exec /data/adb/magisk/busybox sh -o standalone "$0" "$@"
+fi
+set -eu
+OMA_MODULE=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+OMA_DATA=/data/adb/oma-system
+OMA_ROOT="$OMA_DATA/rootfs"
+OMA_PIDFILE="$OMA_DATA/session.pid"
+OMA_RUNNER="$OMA_MODULE/bin/oma-session"
+
+fail() { printf '%s\n' "omactl: $*" >&2; exit 1; }
+[ "$(id -u)" = 0 ] || fail "Run through the phone's root manager (su)."
+
+session_identity() {
+    [ -f "$OMA_PIDFILE" ] || return 1
+    read -r OMA_PID OMA_START OMA_BOOT < "$OMA_PIDFILE" || return 1
+    case "$OMA_PID:$OMA_START" in *[!0-9:]*|:*|*:) return 1 ;; esac
+    [ -r "/proc/$OMA_PID/stat" ] || return 1
+    OMA_ACTUAL=$(sed 's/^.*) //' "/proc/$OMA_PID/stat" | awk '{print $20}')
+    [ "$OMA_START" = "$OMA_ACTUAL" ] || return 1
+    [ "$OMA_BOOT" = "$(cat /proc/sys/kernel/random/boot_id)" ] || return 1
+    [ "$(readlink "/proc/$OMA_PID/exe")" = "$OMA_RUNNER" ] || return 1
+}
+
+namespace_init() {
+    session_identity || return 1
+    read -r OMA_INIT OMA_EXTRA < "/proc/$OMA_PID/task/$OMA_PID/children" || [ -n "${OMA_INIT:-}" ]
+    [ -n "${OMA_INIT:-}" ] && [ -z "${OMA_EXTRA:-}" ] || return 1
+    [ -e "/proc/$OMA_INIT/root/run/oma-services.ready" ]
+}
+
+lock_control() {
+    mkdir "$OMA_DATA/control.lock" 2>/dev/null || fail "Another control operation is running; if a control shell was killed, remove the stale control.lock directory."
+    trap 'rmdir "$OMA_DATA/control.lock"' EXIT
+    trap 'exit 130' INT
+    trap 'exit 143' TERM HUP
+}
+
+OMA_ACTION=${1:-status}
+[ "$#" -eq 0 ] || shift
+case "$OMA_ACTION" in
+    run)
+        [ "$#" -gt 0 ] || fail "Usage: omactl run COMMAND [ARG ...]"
+        exec "$OMA_RUNNER" "$OMA_ROOT" -- "$@"
+        ;;
+    start)
+        [ -d "$OMA_ROOT" ] || fail "Linux is not installed."
+        lock_control
+        if session_identity; then printf '%s\n' 'already running'; exit 0; fi
+        rm -f "$OMA_PIDFILE"
+        setsid "$OMA_RUNNER" --pidfile "$OMA_PIDFILE" "$OMA_ROOT" -- /usr/local/libexec/oma-services < /dev/null >> "$OMA_DATA/session.log" 2>&1 &
+        OMA_LAUNCH=$!
+        OMA_ATTEMPTS=0
+        while [ "$OMA_ATTEMPTS" -lt 10 ]; do
+            if namespace_init; then printf '%s\n' 'native Linux services running'; exit 0; fi
+            kill -0 "$OMA_LAUNCH" 2>/dev/null || fail "Startup failed; read $OMA_DATA/session.log"
+            sleep 1
+            OMA_ATTEMPTS=$((OMA_ATTEMPTS + 1))
+        done
+        kill -TERM "$OMA_LAUNCH" 2>/dev/null || true
+        fail "Startup timed out; read $OMA_DATA/session.log"
+        ;;
+    stop)
+        lock_control
+        if ! session_identity; then printf '%s\n' 'not running'; exit 0; fi
+        kill -TERM "$OMA_PID"
+        OMA_ATTEMPTS=0
+        while session_identity && [ "$OMA_ATTEMPTS" -lt 8 ]; do
+            sleep 1
+            OMA_ATTEMPTS=$((OMA_ATTEMPTS + 1))
+        done
+        if session_identity; then kill -KILL "$OMA_PID"; fi
+        printf '%s\n' 'native Linux services stopped'
+        ;;
+    shell|exec)
+        namespace_init || fail "Start the native runtime first."
+        [ "$OMA_ACTION" != shell ] || set -- /bin/sh -l
+        [ "$#" -gt 0 ] || fail "Usage: omactl exec COMMAND [ARG ...]"
+        # Magisk ships nsenter in its BusyBox; its standalone shell resolves it.
+        exec /data/adb/magisk/busybox nsenter -t "$OMA_INIT" -m -p -u --root="$OMA_ROOT" --wd="$OMA_ROOT/root" \
+            /usr/bin/env -i HOME=/root USER=root LOGNAME=root TERM=xterm-256color \
+            PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin "$@"
+        ;;
+    status)
+        if namespace_init; then printf 'running supervisor=%s init=%s\n' "$OMA_PID" "$OMA_INIT";
+        else printf '%s\n' 'stopped'; fi
+        ;;
+    autostart)
+        case "${1:-}" in
+            on) touch "$OMA_DATA/autostart" ;;
+            off) rm -f "$OMA_DATA/autostart" ;;
+            *) fail "Usage: omactl autostart on|off" ;;
+        esac
+        ;;
+    *) fail "Usage: omactl start|stop|status|shell|exec|run|autostart" ;;
+esac

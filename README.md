@@ -1,5 +1,16 @@
 # Omalauncher
 
+This local fork is developing a native Android system suite without flashing or
+a VM. The [separate system preview](system/companion/README.md) combines native
+Termux commands/packages, Shizuku Android controls, and home, files, notification
+and floating-panel interfaces. It requires device qualification and does not yet
+replace protected Android UI. The accepted direction is recorded in
+[docs/SYSTEM_DIRECTION.md](docs/SYSTEM_DIRECTION.md). An optional root-only runtime
+is retained in [system/README.md](system/README.md) for already-rooted devices.
+The preview now connects the launcher's 22 Omarchy palettes and portable terminal
+configs; follow its [installation guide](system/companion/INSTALL.md).
+The Android app described below remains the upstream launcher pending migration.
+
 An Android home screen with the look of [Omarchy](https://omarchy.org), and an
 optional Arch Linux ARM system next to your phone apps. Omalauncher runs the
 system under proot, without root, and is its Wayland compositor: every Linux

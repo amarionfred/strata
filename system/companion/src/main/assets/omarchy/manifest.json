@@ -1,0 +1,23 @@
+{
+  "repository": "https://github.com/omacom/omarchy",
+  "commit": "8b4eae66da2938ba9559f103b18dbf85cdf28a70",
+  "files": {
+    "LICENSE": "717ba1949502290f8e47688ae2e323acd06c8ca47aec9f7596b15f678c1af4a2",
+    "config/btop/btop.conf": "4e17dd28c43948af48a408ed9b0901c008e57dfe3b8fcf09649ec10f28746137",
+    "config/lazygit/config.yml": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "config/starship.toml": "b17c9b5f096fc125e97050e359171c6011d6b3c7d7e9ac28f630e75b4d4bb9db",
+    "config/tmux/tmux.conf": "d3eeec762196b3132d4b187ed2eb95d113cea698a3833fe87a0f60df6e38e544",
+    "default/bash/aliases": "70d30abe2c2a550624d521f6162900310cbfa4a479510c7d13384013e3ca6366",
+    "default/bash/envs": "e4a49a5a5e92bfea13528263269bfd740d291ccb759b7937cd1f7712d26a5ac1",
+    "default/bash/init": "e6a253e48de370e1e6bdb4e395456179dd39c944dedb179565051c85b0ce4f8a",
+    "default/bash/inputrc": "7747477fb94b32369c1b8e0101958eb6d3be0959c3b37ad32f3bac36fd192567",
+    "default/bash/rc": "f5abfe8652e3df79de7d247f72a7f3b663a6521a8135609b04b839fc6ac2bfda",
+    "default/bash/shell": "8f3842798022c289847993c32d8c6373106761f398b2a34fafd3de1ffc47f8ad",
+    "default/themed/btop.theme.tpl": "88b5057821b674caa8d89a27a6ac912681633b22619927486a76f6ad8a3183a0",
+    "etc/fastfetch/config.jsonc": "00a6fbf9af83cfa5bdb9cd37bc0746bb42e99672fb7cc4d76a92778de720c2b4",
+    "themes/last-horizon/btop.theme": "b1396a01fc50eae877365cbefe941c542942ac64044adccfcc362777bb4621f3",
+    "themes/lumon/btop.theme": "737f37556784ad4ba744f07b634acbead1764804d511ca3f44e9d036b3770838",
+    "themes/retro-82/btop.theme": "3286ab296ed94b03b2b2739cbdf184ca5aaf18d8fe4eb506b93342dc4852f9e1",
+    "themes/solitude/btop.theme": "dae5fb3c8dd9d030e38882c3f330b4f5900409ca7981eacc0b38069087e93fee"
+  }
+}

@@ -1,0 +1,25 @@
+#!/bin/sh
+# Foreground service scripts are owned/configured by the device's root user.
+set -eu
+mkdir -p /var/log/oma-system /run/oma-system
+trap 'exit 0' TERM INT HUP
+
+for service_file in /etc/oma-system/services/*; do
+    [ -f "$service_file" ] && [ -x "$service_file" ] || continue
+    (
+        child=
+        trap '[ -z "$child" ] || kill -TERM "$child" 2>/dev/null; exit 0' TERM INT HUP
+        while :; do
+            "$service_file" >> "/var/log/oma-system/${service_file##*/}.log" 2>&1 &
+            child=$!
+            wait "$child" || true
+            child=
+            sleep 3
+        done
+    ) &
+done
+touch /run/oma-services.ready
+while :; do
+    sleep 3600 &
+    wait "$!" || true
+done

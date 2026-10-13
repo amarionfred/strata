@@ -26,6 +26,80 @@ class InstallTests(unittest.TestCase):
     def configure(self, directory):
         return self.shell('termux-reload-settings() { :; }; connect_termux "$1"', directory)
 
+    def prepare_release(self, cached=None, published=b"published APK", manifest=None, failed_asset=""):
+        for name in ("cache", "stage", "release"):
+            (self.directory / name).mkdir(exist_ok=True)
+        if cached is not None:
+            (self.directory / "cache/strata.apk").write_bytes(cached)
+        (self.directory / "release/strata.apk").write_bytes(published)
+        if manifest is None:
+            manifest = hashlib.sha256(published).hexdigest() + "  strata.apk\n"
+        (self.directory / "release/SHA256SUMS").write_text(manifest)
+        return self.shell('''
+            strata_fixture="$1"
+            strata_failed_asset="$2"
+            : > "$strata_fixture/downloads"
+            download() {
+                local asset="${1##*/}"
+                printf '%s\\n' "$1" >> "$strata_fixture/downloads"
+                [[ "$asset" != "$strata_failed_asset" ]] || fail 'Download failed.'
+                cp -- "$strata_fixture/release/$asset" "$2"
+            }
+            prepare_apk strata-v0.5.0-preview "$strata_fixture/cache" "$strata_fixture/stage"
+            printf READY_TO_INSTALL
+        ''', self.directory, failed_asset)
+
+    def downloads(self):
+        return (self.directory / "downloads").read_text().splitlines()
+
+    def test_verified_cached_apk_is_reused_after_checking_current_release(self):
+        result = self.prepare_release(cached=b"published APK")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(self.downloads(), [
+            "https://github.com/amarionfred/strata/releases/download/strata-v0.5.0-preview/SHA256SUMS"])
+        self.assertIn("Using the verified download", result.stdout)
+        self.assertIn("READY_TO_INSTALL", result.stdout)
+        self.assertEqual((self.directory / "cache/strata.apk").read_bytes(), b"published APK")
+
+    def test_first_install_downloads_and_retry_reuses_apk(self):
+        first = self.prepare_release()
+        self.assertEqual(first.returncode, 0, first.stderr)
+        self.assertEqual(self.downloads(), [
+            "https://github.com/amarionfred/strata/releases/download/strata-v0.5.0-preview/SHA256SUMS",
+            "https://github.com/amarionfred/strata/releases/download/strata-v0.5.0-preview/strata.apk"])
+        self.assertEqual((self.directory / "cache/strata.apk").read_bytes(), b"published APK")
+        retry = self.prepare_release()
+        self.assertEqual(retry.returncode, 0, retry.stderr)
+        self.assertEqual(len(self.downloads()), 1)
+        self.assertIn("READY_TO_INSTALL", retry.stdout)
+
+    def test_stale_apk_is_replaced_by_verified_download(self):
+        result = self.prepare_release(cached=b"old APK")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(len(self.downloads()), 2)
+        self.assertEqual((self.directory / "cache/strata.apk").read_bytes(), b"published APK")
+        self.assertIn("READY_TO_INSTALL", result.stdout)
+
+    def test_corrupt_download_preserves_cache_and_stops_install(self):
+        result = self.prepare_release(cached=b"old APK", manifest="0" * 64 + "  strata.apk\n")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("APK checksum failed", result.stderr)
+        self.assertNotIn("READY_TO_INSTALL", result.stdout)
+        self.assertEqual((self.directory / "cache/strata.apk").read_bytes(), b"old APK")
+
+    def test_invalid_manifest_cannot_reuse_cache_or_download_apk(self):
+        result = self.prepare_release(cached=b"published APK", manifest="not-a-hash  strata.apk\n")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(len(self.downloads()), 1)
+        self.assertNotIn("READY_TO_INSTALL", result.stdout)
+        self.assertEqual((self.directory / "cache/strata.apk").read_bytes(), b"published APK")
+
+    def test_failed_apk_download_preserves_cache_and_stops_install(self):
+        result = self.prepare_release(cached=b"old APK", failed_asset="strata.apk")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertNotIn("READY_TO_INSTALL", result.stdout)
+        self.assertEqual((self.directory / "cache/strata.apk").read_bytes(), b"old APK")
+
     def test_new_config_and_rerun(self):
         first = self.configure(self.directory)
         self.assertEqual(first.returncode, 0, first.stderr)

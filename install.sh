@@ -54,14 +54,40 @@ release_tag() {
     printf '%s\n' "$tag"
 }
 
-verify_apk() {
-    local expected actual
+apk_checksum() {
+    local expected
     # Read only the APK entry; never interpret checksum-file paths as local paths.
     expected=$(awk '$2 == "strata.apk" { print $1 }' "$1")
     [[ "$expected" =~ ^[a-fA-F0-9]{64}$ ]] || fail 'The release has no unique valid APK checksum.'
-    actual=$(sha256sum "$2")
+    printf '%s\n' "$expected"
+}
+
+apk_matches() {
+    local expected="$1" actual
+    [[ -f "$2" ]] || return 1
+    actual=$(sha256sum "$2") || return 1
     actual=${actual%% *}
-    [[ "${actual,,}" == "${expected,,}" ]] || fail 'APK checksum failed. No APK was opened. Run this script again.'
+    [[ "${actual,,}" == "${expected,,}" ]]
+}
+
+verify_apk() {
+    local expected
+    expected=$(apk_checksum "$1")
+    apk_matches "$expected" "$2" || fail 'APK checksum failed. No APK was opened. Run the same installation command again.'
+}
+
+prepare_apk() {
+    local tag="$1" cache="$2" stage="$3" expected
+    download "$strata_repo/releases/download/$tag/SHA256SUMS" "$stage/SHA256SUMS"
+    expected=$(apk_checksum "$stage/SHA256SUMS")
+    if apk_matches "$expected" "$cache/strata.apk"; then
+        printf 'Using the verified download of Strata %s.\n' "${tag#strata-v}"
+        return
+    fi
+    printf 'Downloading Strata %s…\n' "${tag#strata-v}"
+    download "$strata_repo/releases/download/$tag/strata.apk" "$stage/strata.apk"
+    verify_apk "$stage/SHA256SUMS" "$stage/strata.apk"
+    mv -f -- "$stage/strata.apk" "$cache/strata.apk"
 }
 
 connect_termux() {
@@ -106,22 +132,19 @@ main() {
     trap cleanup EXIT
     trap 'exit 130' INT
     trap 'exit 143' TERM
+    printf '\n1/3 Checking the latest Strata download…\n'
     tag=$(release_tag)
-    printf '\nDownloading Strata %s…\n' "${tag#strata-v}"
-    download "$strata_repo/releases/download/$tag/SHA256SUMS" "$strata_stage/SHA256SUMS"
-    download "$strata_repo/releases/download/$tag/strata.apk" "$strata_stage/strata.apk"
-    verify_apk "$strata_stage/SHA256SUMS" "$strata_stage/strata.apk"
+    prepare_apk "$tag" "$cache" "$strata_stage"
     apk="$cache/strata.apk"
-    mv -f -- "$strata_stage/strata.apk" "$apk"
-    printf '\nAPK verified. Connecting Termux…\n'
+    printf '\n2/3 Connecting Termux…\n'
     connect_termux "$HOME"
-    printf '\n1. Choose Package installer in Open with. Allow installs from Termux if asked, then tap Install or Update.\n'
-    printf '2. Open Strata → Setup → Grant command permission → Allow.\n'
-    printf '3. Tap Choose default home and select Strata.\n'
-    printf '\nOpening the app chooser. Select Package installer, not Termux. APK saved at %s\n' "$apk"
-    printf 'If no chooser appears, run: termux-open --chooser --view --content-type application/vnd.android.package-archive %q\n' "$apk"
+    printf '\n3/3 Opening Android installation…\n'
+    printf 'Choose Package installer in Open with. Allow installs from Termux if asked, then tap Install or Update.\n'
+    printf 'After installation, open Strata → Setup → Grant command permission → Allow.\n'
+    printf 'For your first installation, tap Choose default home and select Strata.\n'
+    printf '\nIf installation closes, return to Termux and run the same installation command again.\n'
     termux-open --chooser --view --content-type application/vnd.android.package-archive "$apk" \
-        || fail 'The app chooser could not be opened. Use the termux-open command printed above.'
+        || fail 'The app chooser could not be opened. Run the same installation command again.'
 }
 
 if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then main "$@"; fi

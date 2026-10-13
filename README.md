@@ -18,7 +18,9 @@ The script downloads the APK, checks its checksum, configures Termux, and opens 
 2. In **Strata → Setup**, tap **Grant command permission** and allow it.
 3. Tap **Choose default home** and select **Strata**.
 
-That's the normal installation. Run the same command for updates.
+Run the same command to install, update, or retry. A verified download is reused
+when it matches the latest release. If the old **Save file in ~/downloads/** dialog
+is still open, tap **Cancel**, return to Termux, and run the command above.
 [Download the APK directly](https://github.com/amarionfred/strata/releases/latest/download/strata.apk) if you only want the app.
 
 Requires Android 10+. This is a preview; phone testing is pending. The complete

@@ -15,14 +15,15 @@ are backed up beside `termux.properties` as `termux.properties.strata-backup`.
 3. Tap **Choose default home** and select **Strata**.
 
 No Java, Gradle, Git, or source compilation is required. Android 10+ is required.
-Run the same command to update. Existing app data is kept.
+Run the same command to install, update, or retry. It reuses the downloaded APK
+when its checksum matches the latest release. Existing app data is kept.
 
 ## If installation stops
 
-- No installer appeared: run `termux-open --chooser --view --content-type application/vnd.android.package-archive ~/.cache/strata/strata.apk`, then choose **Package installer**.
-- A **Save file in ~/downloads/** dialog appeared: this is Termux's file receiver. **OPEN DIRECTORY** saves the APK and returns to Termux. Run `termux-open --chooser --view --content-type application/vnd.android.package-archive ~/downloads/strata.apk`, then choose **Package installer**. The keyboard checkmark does not install the app.
+- No installer appeared, or you closed it: return to Termux and run the same installation command above. Choose **Package installer** in **Open with**.
+- A **Save file in ~/downloads/** dialog appeared: tap **Cancel**, return to Termux, and run the same installation command above. Choose **Package installer** when prompted.
 - Download or checksum failed: check your connection and run the installation command again.
-- Android blocked installation: allow **Install unknown apps** for Termux, then reopen the APK with the command above.
+- Android blocked installation: allow **Install unknown apps** for Termux, return to Termux, and run the same installation command above.
 - Terminal commands fail: in Strata's Setup tab, tap **Grant command permission**, then **Verify Termux connection**. Reopen Termux if needed.
 
 The script cannot accept Android's installation or permission dialogs for you.

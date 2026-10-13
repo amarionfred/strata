@@ -13,8 +13,6 @@ import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.foundation.Image
@@ -26,7 +24,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -34,8 +31,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.BasicText
@@ -217,113 +212,6 @@ private fun HitCell(
 ) {
     val (icon, mask, glyph) = hit.icons(runtime)
     AppCell(hit.label, icon, mask, onClick = { handlers.launch(hit) }, actions = { hit.actions(handlers) }, glyph = glyph, selected = selected, spoken = hit.spoken, paused = hit.paused(runtime))
-}
-
-/** Height of the recent apps strip; home keeps this much room for it above the bar, even while it's empty. */
-val RecentStripHeight = 56.dp
-
-/**
- * The apps opened lately, on home right above the bar, scrolling sideways; [vertical] stands it up
- * beside the grid in landscape, scrolling down. A home tile like the others: frame, fill and gaps,
- * or bare when home icons are. Can be hidden in themes.
- */
-@Composable
-internal fun RecentStrip(
-    runtime: Runtime,
-    handlers: AppHandlers,
-    modifier: Modifier = Modifier,
-    vertical: Boolean = false,
-) {
-    val apps = recentApps(runtime, 20)
-    // Nothing opened yet: no strip, but its room stays, so home doesn't shift when the first app shows up.
-    if (apps.isEmpty()) {
-        Spacer(if (vertical) modifier.width(RecentStripHeight) else modifier.height(RecentStripHeight))
-        return
-    }
-    val bare = LauncherStyle.bareAppIcons
-    val listState = rememberLazyListState()
-    // Back on home, the strip starts at the app opened last, wherever it was scrolled to before.
-    LaunchedEffect(runtime.usage.settled) { listState.scrollToItem(0) }
-    Box(
-        modifier
-            .then(if (vertical) Modifier.fillMaxHeight().width(RecentStripHeight) else Modifier.padding(horizontal = EdgeGap).fillMaxWidth().height(RecentStripHeight))
-            .then(if (bare) Modifier else Modifier.tile()),
-        contentAlignment = if (vertical) Alignment.TopCenter else Alignment.CenterStart,
-    ) {
-        val cells: LazyListScope.() -> Unit = {
-            items(apps, key = { it.key }) { hit ->
-                val (icon, mask, glyph) = hit.icons(runtime)
-                StripCell(hit.label, icon, mask, onClick = { handlers.launch(hit) }, actions = { hit.actions(handlers) }, glyph = glyph, spoken = hit.spoken, paused = hit.paused(runtime))
-            }
-        }
-        if (vertical) {
-            LazyColumn(Modifier.fillMaxSize(), state = listState, contentPadding = PaddingValues(vertical = 4.dp), horizontalAlignment = Alignment.CenterHorizontally, content = cells)
-        } else {
-            LazyRow(Modifier.fillMaxSize(), state = listState, contentPadding = PaddingValues(horizontal = 4.dp), verticalAlignment = Alignment.CenterVertically, content = cells)
-        }
-    }
-}
-
-/** An app in the recent strip, drawn like a pinned app's tile: the icon alone, or on a badge when bare. */
-@Composable
-private fun StripCell(
-    label: String,
-    icon: ImageBitmap?,
-    mask: ImageBitmap?,
-    onClick: () -> Unit,
-    /** Built when the menu opens: a fresh list of lambdas would keep the cell from skipping recomposition. */
-    actions: () -> List<Pair<String, () -> Unit>>,
-    glyph: ImageVector? = null,
-    /** As in [AppHit.spoken]. */
-    spoken: String = label,
-    /** As in [AppHit.paused]: drawn dimmed, like stock launchers. */
-    paused: Boolean = false,
-) {
-    var menuOpen by remember { mutableStateOf(false) }
-    val haptics = LocalHapticFeedback.current
-    val mono = LauncherStyle.monochromeIcons
-    val bare = LauncherStyle.bareAppIcons
-    val size = 40.dp
-    Box(
-        Modifier
-            .size(48.dp)
-            .alpha(if (paused) PausedAlpha else 1f)
-            .clip(LauncherStyle.shape(12.dp))
-            .combinedClickable(
-                onClick = onClick,
-                onLongClick = {
-                    haptics.performHapticFeedback(HapticFeedbackType.LongPress)
-                    menuOpen = true
-                },
-            ),
-        contentAlignment = Alignment.Center,
-    ) {
-        val bmp = if (mono) mask else icon
-        when {
-            glyph != null -> Image(glyph, label, Modifier.size(size * 0.7f), colorFilter = ColorFilter.tint(Palette.accent))
-            // Bare silhouettes and initials sit on a badge, as pinned apps do, so they read on any wallpaper.
-            bare && (mono || bmp == null) ->
-                Box(Modifier.size(size).clip(LauncherStyle.shape(size / 2)).background(Palette.surface), contentAlignment = Alignment.Center) {
-                    if (bmp != null) {
-                        Image(bmp, spoken, Modifier.size(size * 0.75f), colorFilter = ColorFilter.tint(Palette.accent))
-                    } else {
-                        BasicText(initials(label), style = Mono.copy(color = Palette.accent, fontSize = TextSize.Body))
-                    }
-                }
-            bmp != null -> Image(bmp, spoken, Modifier.size(size * if (mono) 0.85f else 1f), colorFilter = if (mono) ColorFilter.tint(Palette.accent) else null)
-            else -> BasicText(initials(label), style = Mono.copy(color = Palette.accent, fontSize = TextSize.Large))
-        }
-        if (menuOpen) AppActions(actions(), onDismiss = { menuOpen = false })
-    }
-}
-
-/** The apps opened lately, last opened first; ones not installed (or not loaded yet) are skipped. */
-private fun recentApps(
-    runtime: Runtime,
-    limit: Int,
-): List<AppHit> {
-    val byKey = allApps(runtime).associateBy { it.key }
-    return runtime.usage.recent.mapNotNull { byKey[it] }.take(limit)
 }
 
 /**

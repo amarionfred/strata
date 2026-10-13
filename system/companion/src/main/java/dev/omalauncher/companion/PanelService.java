@@ -42,7 +42,7 @@ public final class PanelService extends Service {
         PendingIntent open = PendingIntent.getActivity(this, 1, new Intent(this, MainActivity.class), PendingIntent.FLAG_IMMUTABLE);
         PendingIntent stop = PendingIntent.getService(this, 2, new Intent(this, PanelService.class).setAction("stop"), PendingIntent.FLAG_IMMUTABLE);
         Notification notification = new Notification.Builder(this, "panel").setSmallIcon(R.drawable.ic_oma)
-                .setContentTitle("Oma controls are available").setContentText("Tap the floating button to open your workspace.")
+                .setContentTitle("Strata controls are available").setContentText("Tap the floating button to open your workspace.")
                 .setContentIntent(open).setOngoing(true).addAction(new Notification.Action.Builder(null, "Stop controls", stop).build()).build();
         if (Build.VERSION.SDK_INT >= 34) startForeground(91, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE);
         else startForeground(91, notification);
@@ -84,7 +84,7 @@ public final class PanelService extends Service {
         button.setTextColor(palette.color("accent"));
         button.setBackgroundTintList(android.content.res.ColorStateList.valueOf(palette.color("lighter_background")));
         button.setAllCaps(false);
-        button.setContentDescription(label.equals("›_") ? "Open Oma controls" : label);
+        button.setContentDescription(label.equals("›_") ? "Open Strata controls" : label);
         button.setOnClickListener(v -> action.run());
         panel.addView(button);
     }

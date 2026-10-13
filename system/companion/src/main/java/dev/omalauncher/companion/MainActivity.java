@@ -132,7 +132,7 @@ public final class MainActivity extends Activity {
         appRows = null; appTabs = null; appQuery = null;
         LinearLayout heading = column();
         heading.setPadding(dp(20), dp(14), dp(20), dp(8));
-        text(heading, "oma / system preview", 14, ACCENT, true);
+        text(heading, "strata", 14, ACCENT, true);
         status = text(heading, "", 12, MUTED, false);
         root.addView(heading);
         ScrollView scroll = new ScrollView(this);
@@ -352,7 +352,7 @@ public final class MainActivity extends Activity {
                 .addCategory(Intent.CATEGORY_OPENABLE).setType("*/*").addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION), 811));
         text(choices, "Imported palettes are color data only. Desktop Hyprland/Waybar settings do not control Android; launcher widgets and wallpaper files are not imported in this build.", 13, MUTED, false);
         LinearLayout wallpaper = card("Android wallpaper", "Set a photo or the current palette's background color on the home and lock screens. An active live wallpaper is kept.");
-        text(wallpaper, ui.getString("wallpaper-result", "No wallpaper applied by Oma yet."), 14, MUTED, false);
+        text(wallpaper, ui.getString("wallpaper-result", "No wallpaper applied yet."), 14, MUTED, false);
         button(wallpaper, "Choose a wallpaper image", () -> {
             if (wallpaperBusy) throw new IllegalStateException("Wait for the current wallpaper operation.");
             startActivityForResult(new Intent(Intent.ACTION_OPEN_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE)
@@ -534,12 +534,12 @@ public final class MainActivity extends Activity {
         button(runtime, "Runtime permission settings", () -> startActivity(new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:" + getPackageName()))));
         button(runtime, "Verify native runtime", () -> run("inspect", "Runtime identity", Commands.inspect()));
         button(runtime, "Connect Omarchy themes and configs", () -> { tab = "Themes"; render(); });
-        LinearLayout management = card("2 / Android controls", "Start Shizuku and authorize Oma. An ADB-started service needs activation again after a reboot. On the Tecno, use USB activation from the computer.");
+        LinearLayout management = card("2 / Android controls", "Start Shizuku and allow Strata to use it. Restart Shizuku after rebooting your phone.");
         button(management, "Shizuku downloads and setup", () -> openUrl("https://shizuku.rikka.app/guide/setup/"));
         button(management, "Open Shizuku", () -> openPackage("moe.shizuku.privileged.api"));
         button(management, "Authorize controls", () -> admin.request());
         adminStatus = text(management, "", 14, ACCENT, false);
-        LinearLayout interfaceBox = card("3 / Your interface", "Use Oma as home and open its panels from other apps. Android's secure lock screen, system shade, and other apps keep their own interface in this preview.");
+        LinearLayout interfaceBox = card("3 / Your interface", "Use Strata as home and open its panels from other apps. Android's secure lock screen, system shade, and other apps keep their own interface in this preview.");
         if (Build.VERSION.SDK_INT >= 35) button(interfaceBox, catalog.privateShown() ? "Hide private-space tab" : "Show private-space tab", () -> {
             catalog.privateShown(!catalog.privateShown()); appTab = AppPolicy.Kind.PERSONAL; render();
         });
@@ -605,7 +605,7 @@ public final class MainActivity extends Activity {
         else text += (job.has("exit") ? "Process exit: " + job.optInt("exit") + "\n" : "")
                 + job.optString("error") + "\n" + job.optString("stdout")
                 + (job.optString("stderr").isEmpty() ? "" : "\n[stderr]\n" + job.optString("stderr"))
-                + (job.optBoolean("truncated") ? "\n[Termux or Oma truncated this output]" : "");
+                + (job.optBoolean("truncated") ? "\n[Termux or Strata truncated this output]" : "");
         ScrollView scroll = new ScrollView(this);
         TextView output = new TextView(this); output.setPadding(dp(20), dp(12), dp(20), dp(12));
         output.setTypeface(Typeface.MONOSPACE); output.setTextSize(12); output.setTextIsSelectable(true); output.setText(text);

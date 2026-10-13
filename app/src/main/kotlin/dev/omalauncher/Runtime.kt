@@ -343,7 +343,7 @@ class Runtime(
         }
         linux = true
         proot.procShim.setActive(screens > 0)
-        // The recent apps strip on home lists Linux apps before the app list is ever opened.
+        // Load Linux entries for pinned apps and search.
         scope.launch { refreshApps() }
         // Themes picked without Linux are written into the guest now.
         themes.renderGuest()

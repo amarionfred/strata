@@ -44,7 +44,7 @@ class StyleTest {
     }
 
     @Test fun writesWhatItReads() {
-        val t = linkedMapOf<String, Any>("version" to 1.0, "theme" to "a \"b\"", "widgets.gaps-in" to 6.0, "corners.scale" to 0.5, "home.recent-apps" to false)
+        val t = linkedMapOf<String, Any>("version" to 1.0, "theme" to "a \"b\"", "widgets.gaps-in" to 6.0, "corners.scale" to 0.5, "home.app-tiles" to false)
         val text = Toml.write(t)
         assertEquals(t, Toml.parse(text))
         assertTrue(text, "gaps-in = 6\n" in text)
@@ -69,6 +69,16 @@ class StyleTest {
         val decoded = StyleFile.decode(Toml.parse(StyleFile.defaultsText()))
         assertEquals(emptyList<String>(), decoded.problems)
         assertEquals(Style(), decoded.style)
+    }
+
+    @Test fun oldRecentAppsSettingDoesNotBreakSavedStyles() {
+        val table = Toml.parse("version = 1\ntheme = \"nord\"\n[home]\nrecent-apps = true\n")
+        val decoded = StyleFile.decode(table)
+        assertTrue(decoded.problems.isEmpty())
+        assertEquals("nord", decoded.style[Style.THEME])
+        val saved = StyleFile.encode(table, decoded.style)
+        assertFalse(saved.containsKey("home.recent-apps"))
+        assertEquals(decoded.style, StyleFile.decode(saved).style)
     }
 
     @Test fun badValuesKeepThePreviousOne() {

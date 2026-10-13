@@ -108,7 +108,6 @@ object LauncherStyle {
     val bareAppIcons get() = !style[Style.APP_TILES]
 
     /** The strip of recently used apps above the bar on home. */
-    val recentApps get() = style[Style.RECENT_APPS]
     val drawerKeyboard get() = style[Style.DRAWER_KEYBOARD]
     val homeAppsInDrawer get() = style[Style.HOME_APPS_IN_DRAWER]
 

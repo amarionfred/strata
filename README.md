@@ -1,112 +1,41 @@
-# Omalauncher
+# Strata
 
-This local fork is developing a native Android system suite without flashing or
-a VM. The [separate system preview](system/companion/README.md) combines native
-Termux commands/packages, Shizuku Android controls, and home, files, notification
-and floating-panel interfaces. It requires device qualification and does not yet
-replace protected Android UI. The accepted direction is recorded in
-[docs/SYSTEM_DIRECTION.md](docs/SYSTEM_DIRECTION.md). An optional root-only runtime
-is retained in [system/README.md](system/README.md) for already-rooted devices.
-The preview now connects the launcher's 22 Omarchy palettes and portable terminal
-configs; follow its [installation guide](system/companion/INSTALL.md).
-The Android app described below remains the upstream launcher pending migration.
-The [upstream audit](docs/UPSTREAM_AUDIT.md) records all 34 open issues and 26 PRs,
-including the five requested integrations and what is still unfinished. Read
-[SECURITY.md](SECURITY.md) for shared-widget trust and the legacy sandbox limitation.
+Android home, native terminal, packages, files, notifications, and Omarchy themes.
+Based on [Omalauncher](https://github.com/SimonSchubert/omalauncher).
 
-An Android home screen with the look of [Omarchy](https://omarchy.org), and an
-optional Arch Linux ARM system next to your phone apps. Omalauncher runs the
-system under proot, without root, and is its Wayland compositor: every Linux
-window opens as its own Android task, with its own card in Recents.
+## Install
 
-<a href="https://play.google.com/store/apps/details?id=dev.omalauncher"><img src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png" alt="Get it on Google Play" height="80"></a>
+Requires Android 10 or newer. This is an early build; phone testing is still pending.
 
-![The home screen in twelve Omarchy themes, each with different widgets](art/collage.png)
+1. [Download strata.apk](https://github.com/amarionfred/strata/releases/latest/download/strata.apk) and open it on your phone. Allow installation when Android asks.
+2. Install [Termux](https://f-droid.org/packages/com.termux/) and open it once.
+3. Open **Strata → Setup → Copy setup command**. Paste it into Termux and run it.
+4. Return to Strata and tap **Grant command permission**, then **Verify native runtime**.
+5. Tap **Choose default home** and select **Strata**.
 
-<p>
-  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/01.png" width="24%" alt="Screenshot">
-  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/02.png" width="24%" alt="Screenshot">
-  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/03.png" width="24%" alt="Screenshot">
-  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/04.png" width="24%" alt="Screenshot">
-</p>
+In **Themes**, pick a palette and tap **Apply to terminal**. **Install terminal tools** adds the listed packages.
 
-- **Themes**: all 22 Omarchy themes, with their wallpapers, applied to the
-  launcher and to the Linux apps, plus the community themes from
-  [omarchy.org/themes](https://omarchy.org/themes/), or your own in
-  `~/.config/omarchy/themes`
-- **Widgets** written in OWL, a small declarative language you can edit on the
-  phone, plus a [widget store](https://github.com/SimonSchubert/omarchy-widgets)
-- **Linux, optional**: pacman and the AUR, Linux apps in their own windows,
-  terminal widgets, a file manager, and opt-in GPU acceleration on Mali GPUs
-- **Coding agents**: the bar at the bottom sends a prompt to Claude Code, Codex,
-  Copilot, opencode and others, which open in a terminal
-- No account, no ads, no tracking
+[Shizuku](https://shizuku.rikka.app/guide/setup/) is optional for Android controls.
+Notification access and floating controls can be enabled in Setup.
 
-Needs an arm64 phone with Android 10 or newer. Without Linux, the launcher still
-has the themes, wallpapers, Android apps and the widgets that don't run commands.
+Android stays installed. No flashing, reset, root, or VM is needed.
+The lock screen, system notification shade, and other apps keep their own UI.
+Strata does not grant root or kernel access.
 
-## Using it
+To remove it, choose another home app in Android settings, then uninstall Strata.
 
-The bar: the one input at the bottom of the home screen opens apps and asks
-coding agents. Focusing it opens the list of Linux and Android apps; typing
-narrows the list, and Enter opens the highlighted app or sends the text to the
-agent. Short queries that name an app open it, sentences go to the agent; Tab
-and the arrow keys move the highlight. Tap the agent's name to pick another
-installed one; the choice is saved in `~/.config/omalauncher/agent`. Hold the mic to talk and release to send, or tap it to dictate
-into the field. Speech is recognized by Android (on the device when the phone
-supports it), so only text reaches Linux.
+## Build
 
-On Android 15 or newer, set Omalauncher as the default home app to see Private
-Space. Its own drawer tab has a lock/unlock action and stays visible while the
-space is locked. Private apps are absent from the personal tab, bar search,
-recent apps, home shortcuts, and widget app lists. The launcher settings have
-a **private space** row to hide or show the tab; hiding it does not change the
-system's Private Space lock state.
-
-Touch input in Linux windows: tap is a left click, long press is a right
-click, drag scrolls; apps with touch support (foot, GTK) get real touch.
-Hardware keyboard shortcuts: Super+Enter (terminal), Super+Space or
-Super+A (the bar), Super+1..9 (home pages) on the home screen; Super+Enter
-and Super+W (close) in Linux windows.
-
-## Building
+Use JDK 25 and Android SDK 36. Set `ANDROID_HOME` to your SDK folder.
 
 ```sh
-./scripts/fetch-proot.sh          # Termux's proot -> app/src/main/jniLibs (needs bsdtar)
-./gradlew :app:installDebug
-# optional: skip the 830 MB download on the device
-adb push ArchLinuxARM-aarch64-latest.tar.gz /sdcard/Android/data/dev.omalauncher/files/
+./gradlew -p system/companion assembleDebug
 ```
 
-Tests: `./gradlew :owl:test :app:testDebugUnitTest`. `./gradlew :owl:owlJar`
-builds `owl/build/cli/owl.jar`, the checker the widget store's CI runs.
+APK: `system/companion/build/outputs/apk/debug/Strata-debug.apk`.
 
-In debug builds you can launch guest commands with
-`adb shell am start -n dev.omalauncher/.MainActivity --es exec foot`.
+The downloadable APK comes from `system/companion/`. The original Compose
+launcher is in `app/`; its recent-app row has been removed. Its optional legacy
+Linux backend is separate from Strata's native Termux runtime.
 
-- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md): the compositor, rendering, GPU
-  acceleration, and how updates reach existing installs
-- [docs/RELEASING.md](docs/RELEASING.md): Play releases and store assets
-- [app/src/main/assets/widgets/README.md](app/src/main/assets/widgets/README.md):
-  the widget language
-
-## Layout
-
-- `app/`: the Android app (Kotlin, Jetpack Compose, and the JNI bridge in `src/main/cpp`)
-- `owl/`: the widget language and the `owl` command line, plain Kotlin
-- `art/`: SVG masters for the app, agent and store icons
-- `store/`: Play listing sources (screenshot frames, privacy policy)
-- `fastlane/`: the Play listing and the upload lanes
-- `scripts/`: fetching proot and theme colors, rendering icons, screenshots and widget previews
-
-## License
-
-MIT, see [LICENSE](LICENSE), for Omalauncher's own code and artwork. The
-coding agents' logos, the symbol font and Omarchy's theme colors are not
-covered; [THIRD_PARTY.md](THIRD_PARTY.md) lists them with their sources and
-licenses. The app also ships proot, talloc and libandroid-shmem (GPL-2.0,
-LGPL-3.0 and BSD-3-Clause, prebuilt by Termux), listed in the app under
-settings › licenses.
-
-Omalauncher is an independent project and is not affiliated with or endorsed
-by Omarchy, Arch Linux, or the makers of the coding agents it installs.
+[Development](CONTRIBUTING.md) · [Upstream fixes](docs/UPSTREAM_AUDIT.md) · [License](LICENSE)

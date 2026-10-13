@@ -6,7 +6,7 @@ public final class Commands {
     public static final String PREFIX = "/data/data/com.termux/files/usr";
     public static final String HOME = "/data/data/com.termux/files/home";
     public static final String CONFIG = ".config/oma/session.sh";
-    public static final String DEFAULT_CONFIG = "# Loaded by Oma command jobs. Native Termux user permissions apply.\n"
+    public static final String DEFAULT_CONFIG = "# Loaded by Strata command jobs. Native Termux user permissions apply.\n"
             + "export EDITOR=nano\n# Add your aliases, exports, or explicit source commands here.\n";
 
     public static String quote(String value) {

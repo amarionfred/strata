@@ -71,7 +71,7 @@ fun SettingsScreen(
                 Triple("android settings", "the phone's system settings") {
                     context.startActivity(Intent(Settings.ACTION_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
                 },
-                Triple("licenses", "open source software in Omalauncher", onLicenses),
+                Triple("licenses", "open source software in Strata", onLicenses),
             )
         if (installed) {
             LaunchedEffect(Unit) { runtime.updates.check() }

@@ -186,7 +186,7 @@ private fun DesktopScreen(
     val side = homeSide()
     if (side != null && !panelShown) {
         if (runtime.terminals.active == null) {
-            SideRail(runtime, state, handlers, side, Modifier.fillMaxSize().safePadding())
+            SideRail(runtime, state, side, Modifier.fillMaxSize().safePadding())
         }
     } else {
         Column(
@@ -220,9 +220,6 @@ private fun DesktopScreen(
             }
             // Hidden while a terminal tile types: it would sit on the keyboard, over the tile.
             if (runtime.terminals.active == null || runtime.terminals.keyboardLeaving) {
-                // Home only: the open app list has everything.
-                // Swiping up from either does what it does on home, as from the dock on stock launchers.
-                if (LauncherStyle.recentApps && !panelShown) RecentStrip(runtime, handlers, Modifier.homeSwipe(runtime, state))
                 // Insets itself by the grid gap, so it lines up with the tiles and the gap still takes taps.
                 PromptBar(runtime, state, search = search, highlighted = highlighted, onLaunch = handlers.launch, modifier = Modifier.homeSwipe(runtime, state))
             }

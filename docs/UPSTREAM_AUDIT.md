@@ -1,6 +1,6 @@
 # Upstream issue and PR audit — 2026-10-13
 
-This is an implementation and triage record, **not a claim that every upstream issue is fixed**. The public API snapshot has 34 open issues and 26 open PRs. Closed issues/PRs are not silently counted as work remaining. The only configured remote is `SimonSchubert/omalauncher`; there is no separate published fork remote. Changes are local on `fork/android-linux`, and no upstream issue was closed or PR posted.
+Snapshot: 34 open issues and 26 open PRs. The tables below record implemented fixes, partial fixes, and remaining work. Closed issues and PRs are excluded.
 
 ## Applications and latest upstream
 
@@ -25,7 +25,7 @@ This is an implementation and triage record, **not a claim that every upstream i
 
 | Issue | Disposition |
 | --- | --- |
-| [#3: More App bar Customization](https://github.com/SimonSchubert/omalauncher/issues/3) | Pending: configurable bottom-strip pins (#18) are not imported; existing home pinning remains. |
+| [#3: More App bar Customization](https://github.com/SimonSchubert/omalauncher/issues/3) | Not planned for Strata: the recent-app strip is removed. Existing home pinning remains. |
 | [#5: Terminal widget restarts on its own after `exit`](https://github.com/SimonSchubert/omalauncher/issues/5) | Implemented in original app: first-appearance gate prevents automatic restart after exit when a tile re-enters composition. Explicit tap still restarts. Lifecycle host tests pass. |
 | [#7: Hide the "no widgets on this page" hint outside arrange mode?](https://github.com/SimonSchubert/omalauncher/issues/7) | Implemented in original app: empty-page hints appear while arranging/carrying or when the whole home is empty; intentionally blank pages stay clear. |
 | [#8: Feature idea: a small page indicator on home?](https://github.com/SimonSchubert/omalauncher/issues/8) | Pending: configurable page indicators are not added. |

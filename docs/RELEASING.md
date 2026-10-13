@@ -1,45 +1,13 @@
-# Releasing
+# Strata releases
 
-The Play listing lives in `fastlane/metadata/android/en-US` (title, short and
-full description, `changelogs/<versionCode>.txt`, images). Publishing runs
-locally; only the maintainer can upload. Release builds are signed with the upload key described in
-`keystore.properties` at the repo root (gitignored), otherwise with the debug
-key, which Play rejects:
+The public APK is built from `system/companion/`.
 
-```properties
-storeFile=../omalauncher-upload.jks
-storePassword=...
-keyAlias=upload
-keyPassword=...
-```
+1. Bump `versionCode` and `versionName` in `system/companion/build.gradle.kts`.
+2. Run the checks in [CONTRIBUTING.md](../CONTRIBUTING.md).
+3. Build `assembleDebug` using the existing preview signing key. Keep this key private and backed up; changing it prevents updates over older builds.
+4. Copy the APK to `strata.apk` and run `sha256sum strata.apk > SHA256SUMS`.
+5. Tag the tested commit and attach both files to a GitHub release. Record build results and any device checks in the release notes.
 
-`storeFile` is relative to the repo root; keep the keystore outside it.
-fastlane needs the Play service-account key at `fastlane/play-store-key.json`
-(gitignored).
+Current releases are debug-signed preview builds. A production signing migration has not been configured.
 
-```sh
-./scripts/fetch-proot.sh                  # jniLibs aren't in git
-bundle exec fastlane android metadata     # listing text and images only
-bundle exec fastlane android internal     # build + upload to internal testing
-bundle exec fastlane android promote      # internal -> production
-```
-
-Bump `versionCode` for every upload and add its changelog. Add the release's
-most important changes to `CHANGELOG.md` as they land under "Unreleased", and
-retitle that section with the version when releasing.
-
-## Store assets
-
-- `art/`: the SVG masters. `scripts/make-icons.sh` renders the app and agent
-  icons from them, including the Play Store icon; the feature graphic is
-  exported by hand to `fastlane/metadata/android/en-US/images/featureGraphic.png`.
-- `store/screenshots/`: `frame.html` adds the captions and frames to the raw
-  captures in `raw/`; `scripts/render-screenshots.sh` renders the Play
-  screenshots from it (needs Google Chrome).
-- `store/privacy-policy.txt`: the source of the privacy policy that the
-  listing links to. Upload the new version before releasing a build that
-  changes what the app accesses.
-- `store/foreground-service-demo.mp4`: the recording for Play's
-  foreground-service declaration.
-
-Widget store previews are made with `scripts/store-previews.sh`; see its header.
+The legacy launcher workflow only runs for `launcher-v*` tags and uses its own signing secrets. It does not publish the Strata APK.

@@ -1,10 +1,10 @@
-name: release
+name: legacy launcher release
 
-# Builds a signed APK for a version tag (v0.4.0) and attaches it to a GitHub release.
+# Builds a signed APK for a legacy version tag (launcher-v0.7.0) and attaches it to a GitHub release.
 # The Play Store AAB is still built and uploaded locally with fastlane.
 on:
   push:
-    tags: ['v*']
+    tags: ['launcher-v*']
 
 permissions:
   contents: read
@@ -33,7 +33,7 @@ jobs:
         run: |
           name=$(sed -n 's/^ *versionName = "\(.*\)"/\1/p' app/build.gradle.kts)
           code=$(sed -n 's/^ *versionCode = \([0-9]*\)/\1/p' app/build.gradle.kts)
-          if [ "$GITHUB_REF_NAME" != "v$name" ]; then
+          if [ "$GITHUB_REF_NAME" != "launcher-v$name" ]; then
             echo "Tag $GITHUB_REF_NAME doesn't match versionName $name" >&2
             exit 1
           fi

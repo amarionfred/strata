@@ -173,14 +173,14 @@ fun HomeScreen(
     val imeTarget = WindowInsets.imeAnimationTarget
     val statusBar = WindowInsets.statusBars.union(WindowInsets.displayCutout)
     // Back with the soft keyboard up only reaches the keyboard app, which closes itself. Closed like that
-    // (not by the tile's ⌨ button), the tile lets go too, so the bar and recent apps come back. Only once it's gone:
+    // (not by the tile's ⌨ button), the tile lets go too, so the bar comes back. Only once it's gone:
     // hiding it again mid-way, while a back swipe still drives its animation, left home taking no touches.
     LaunchedEffect(terminals) {
         snapshotFlow { ime.getBottom(density) > 0 }.collect { shown ->
             if (!shown && terminals.keyboard?.wanted == true) terminals.deactivate()
         }
     }
-    // The bar and recent apps don't wait for that: back as the keyboard starts closing, like the pages.
+    // The bar doesn't wait for that: back as the keyboard starts closing, like the pages.
     LaunchedEffect(terminals) {
         snapshotFlow { imeTarget.getBottom(density) == 0 && terminals.keyboard?.wanted == true }.collect { terminals.keyboardLeaving = it }
     }
@@ -343,9 +343,6 @@ fun HomeScreen(
                         )
                 }
             },
-            // The recent apps strip's room: kept while it's empty, so tiles don't reflow when it fills, and still
-            // home's to swipe and long-press there until it does.
-            room = if (LauncherStyle.recentApps && side == null) RecentStripHeight else 0.dp,
             turned = turned,
             side = side,
             per = per,

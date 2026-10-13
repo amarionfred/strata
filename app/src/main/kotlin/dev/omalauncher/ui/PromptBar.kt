@@ -243,7 +243,7 @@ internal fun PromptBar(
             BasicText(
                 it,
                 Modifier
-                    // Takes no room: it shows over the recent apps strip rather than pushing it into the grid.
+                    // Draw the hint over home without changing the grid height.
                     .layout { measurable, constraints ->
                         val p = measurable.measure(constraints)
                         layout(p.width, 0) { p.place(0, -p.height) }

@@ -75,7 +75,7 @@ class Gestures(
 /**
  * Dragging up opens the drawer under the finger and dragging down closes it, as on stock launchers: the panel
  * follows the drag and a fling or how far it got decides where it settles. Scrollables inside (a widget's
- * list, the recent apps strip) take their own direction first.
+ * list) take their own direction first.
  */
 @Composable
 internal fun Modifier.drawerSwipe(
@@ -92,7 +92,7 @@ internal fun Modifier.drawerSwipe(
 }
 
 /**
- * Swiping up on home (the pages, the recent apps strip, the bar) does what's picked in gesture settings. With
+ * Swiping up on home (the pages, the bar) does what's picked in gesture settings. With
  * the drawer open, the swipe drags it whatever the setting, so it can still be pulled closed.
  */
 @Composable

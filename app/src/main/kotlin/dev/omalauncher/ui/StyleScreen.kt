@@ -102,7 +102,6 @@ fun StyleScreen(
             val style = runtime.style
             Flag("icons", "monochrome", "colored", style, Style.MONOCHROME_ICONS)
             Flag("home apps", "boxed", "icon only", style, Style.APP_TILES)
-            Flag("recent apps", "shown", "hidden", style, Style.RECENT_APPS)
             Flag("keyboard", "opens with apps", "on tap", style, Style.DRAWER_KEYBOARD)
             Flag("drawer", "all apps", "not on home", style, Style.HOME_APPS_IN_DRAWER)
             NumberOption("corners", Corners.entries.map { it.label to it.scale.toDouble() }, Style.CORNER_SCALE, style)

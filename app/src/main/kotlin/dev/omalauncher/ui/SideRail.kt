@@ -38,7 +38,7 @@ import androidx.compose.ui.unit.dp
 import dev.omalauncher.Runtime
 import dev.omalauncher.linux.LinuxState
 
-/** Where landscape home keeps the recent apps strip and the bar: the side portrait's bottom turned to. */
+/** The edge holding the prompt bar in landscape. */
 enum class HomeSide { Left, Right }
 
 /** Whether home turns portrait's grid on its side: landscape, unless the window shows two pages. */
@@ -49,9 +49,7 @@ internal fun homeTurned(): Boolean {
 }
 
 /**
- * The side for the strip and the bar where home turns its grid on its side; null in portrait. Only a phone's
- * landscape is too short for them below the grid: a tablet keeps them there, where a rail would stack its
- * prompt one letter at a time down a long edge.
+ * The prompt bar moves to the side on landscape phones. Tablets keep it below the grid.
  */
 @Composable
 internal fun homeSide(): HomeSide? {
@@ -89,27 +87,21 @@ internal fun homeSide(): HomeSide? {
 internal fun showsTwoPages(window: IntSize) = window.width / 2f / window.height in 0.4f..0.65f
 
 /**
- * Room the side takes beside the grid: the strip and the gap between tiles after it, then the rail and the edge's gap
- * (the grid's own gap comes before).
- * Added up in whole pixels, each part rounded as [SideRail] lays it out, so the grid ends exactly where the strip starts.
+ * Prompt rail and edge padding, rounded separately to match [SideRail].
  */
 @Composable
 internal fun sideWidth(): Dp =
     with(LocalDensity.current) {
-        val gap = HomeGap.roundToPx()
-        ((if (LauncherStyle.recentApps) RecentStripHeight.roundToPx() + gap else 0) + PromptBarHeight.roundToPx() + EdgeGap.roundToPx()).toDp()
+        (PromptBarHeight.roundToPx() + EdgeGap.roundToPx()).toDp()
     }
 
 /**
- * Landscape home's side: portrait's bottom turned with the grid. The recent apps strip stands
- * beside the grid with its icons upright, and the bar folds into a rail at the edge; tapping it
- * unfolds the bar and the app panel.
+ * Tap the landscape rail to open the prompt bar and app panel.
  */
 @Composable
 internal fun SideRail(
     runtime: Runtime,
     state: LauncherState,
-    handlers: AppHandlers,
     side: HomeSide,
     modifier: Modifier = Modifier,
 ) {
@@ -117,16 +109,10 @@ internal fun SideRail(
         modifier.fillMaxHeight().padding(vertical = EdgeGap),
         horizontalArrangement = if (side == HomeSide.Left) Arrangement.Start else Arrangement.End,
     ) {
-        // Outward from the grid, like portrait from the grid down: the strip, then the bar.
-        val strip = @Composable { if (LauncherStyle.recentApps) RecentStrip(runtime, handlers, vertical = true) }
         if (side == HomeSide.Left) {
             Spacer(Modifier.width(EdgeGap))
             PromptRail(runtime, state)
-            Spacer(Modifier.width(HomeGap))
-            strip()
         } else {
-            strip()
-            Spacer(Modifier.width(HomeGap))
             PromptRail(runtime, state)
             Spacer(Modifier.width(EdgeGap))
         }

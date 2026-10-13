@@ -257,7 +257,6 @@ class StyleStore(
             themes.getString("background", null)?.let { s = s.with(Style.BACKGROUND, it) }
             s = s.with(Style.MONOCHROME_ICONS, themes.getBoolean("mono_icons", false))
             s = s.with(Style.APP_TILES, !themes.getBoolean("bare_app_icons", false))
-            s = s.with(Style.RECENT_APPS, themes.getBoolean("recent_apps", true))
             // Framed was the default then; it's written out, as it no longer is.
             // Only a choice made in the Style menu: unset, the bars take today's default.
             if (themes.contains("framed_system_bars")) {

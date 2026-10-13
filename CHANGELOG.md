@@ -4,6 +4,13 @@ The most important changes in each release. The Play Store notes for a release
 are in `fastlane/metadata/android/en-US/changelogs/<versionCode>.txt`.
 Dates are when the build was uploaded to Play.
 
+## Strata 0.4.0-preview
+
+- Rename the native Android app to Strata.
+- Remove the original launcher's recent-app row in portrait and landscape, including its reserved space and settings toggle.
+- Keep existing styles readable when they contain the old recent-app setting.
+- Shorten installation instructions.
+
 ## Fork — unreleased
 
 - Native preview 0.3: profile-aware app catalog, accent search, Android pin

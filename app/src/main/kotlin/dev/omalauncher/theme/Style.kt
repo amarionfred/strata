@@ -140,7 +140,6 @@ class Style(
         val STATIC_WALLPAPER = Setting.Flag("wallpaper.sync-static", false, "Also apply a selected background to Android's system and lock wallpaper. Active live wallpapers are preserved.")
 
         val APP_TILES = Setting.Flag("home.app-tiles", true, "Apps on home in a tile like a widget; false draws bare icons on the wallpaper.")
-        val RECENT_APPS = Setting.Flag("home.recent-apps", true, "The strip of recently used apps above the prompt bar.")
         val DRAWER_KEYBOARD = Setting.Flag("drawer.keyboard", true, "Open the keyboard with the drawer; false waits for a tap on the search field.")
         val HOME_APPS_IN_DRAWER = Setting.Flag("drawer.home-apps", true, "Include apps pinned on home in the drawer. Search always includes them.")
 
@@ -200,7 +199,7 @@ object StyleFile {
 
     val ALL: List<Setting<*>> =
         with(Style) {
-            listOf(THEME, BACKGROUND, STATIC_WALLPAPER, APP_TILES, RECENT_APPS, DRAWER_KEYBOARD, HOME_APPS_IN_DRAWER, GAPS_IN, GAPS_OUT, TILE_BORDER_WIDTH, TILE_BORDER, TILE_BORDER_FOCUSED) +
+            listOf(THEME, BACKGROUND, STATIC_WALLPAPER, APP_TILES, DRAWER_KEYBOARD, HOME_APPS_IN_DRAWER, GAPS_IN, GAPS_OUT, TILE_BORDER_WIDTH, TILE_BORDER, TILE_BORDER_FOCUSED) +
                 listOf(SCREEN_GAPS_OUT, SCREEN_BORDER_WIDTH, MONOCHROME_ICONS, CORNER_SCALE) +
                 STATUS_BAR.all + NAVIGATION_BAR.all + listOf(TERMINAL_FONT, TERMINAL_TEXT)
         }
@@ -234,7 +233,7 @@ object StyleFile {
         val values = HashMap<String, Any?>()
         val problems = ArrayList<String>()
         for ((key, value) in table) {
-            if (key == VERSION_KEY) continue
+            if (key == VERSION_KEY || key == "home.recent-apps") continue
             val setting = byKey[key]
             if (setting == null) {
                 problems += "$key: not a setting; see defaults.toml"
@@ -260,7 +259,7 @@ object StyleFile {
     ): LinkedHashMap<String, Any> {
         val out = LinkedHashMap<String, Any>()
         out[VERSION_KEY] = (table[VERSION_KEY] as? Double) ?: VERSION.toDouble()
-        for ((k, v) in table) if (k != VERSION_KEY && k !in byKey) out[k] = v
+        for ((k, v) in table) if (k != VERSION_KEY && k != "home.recent-apps" && k !in byKey) out[k] = v
         // Known keys in the schema's order, so the sections come out the same way every time.
         for (setting in ALL) style[setting]?.takeIf { it != setting.default }?.let { out[setting.key] = it }
         return out

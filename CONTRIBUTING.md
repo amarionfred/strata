@@ -1,6 +1,6 @@
-# Contributing to the fork
+# Contributing to Strata
 
-There are two applications. `app/` is the original Compose launcher with optional Arch/PRoot and Wayland support. `system/companion/` is the native system preview, using Termux and optional Shizuku. Changes to one are not automatically shipped in the other.
+There are two applications. `app/` is the original Compose launcher with optional Arch/PRoot and Wayland support. `system/companion/` is the Strata Android app, using Termux and optional Shizuku. Changes to one are not automatically shipped in the other.
 
 Use JDK 25 to run the Gradle wrapper, with a JDK 17 toolchain available for OWL. The original app compiles against Android 37; the preview compiles against Android 36. Both require Android 10 or later. Configure `ANDROID_HOME` with your SDK path.
 

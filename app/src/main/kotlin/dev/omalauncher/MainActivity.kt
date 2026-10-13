@@ -139,8 +139,6 @@ class MainActivity : ComponentActivity() {
     override fun onStop() {
         super.onStop()
         state.closeNow()
-        // An app was just opened from home: it moves to the front of the strip now, out of sight.
-        runtime.usage.settle()
         runtime.widgets.homeStopped()
         runtime.screenStopped()
     }

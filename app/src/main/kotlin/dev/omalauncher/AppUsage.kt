@@ -1,16 +1,11 @@
 package dev.omalauncher
 
 import android.content.Context
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateMapOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import kotlin.math.pow
 
 /**
- * How often and how lately apps were opened, for the recent apps strip and to rank
- * search results. Launches count less as they age: half every two weeks.
+ * App launch frequency ranks search results. Launches count less as they age: half every two weeks.
  */
 class AppUsage(
     context: Context,
@@ -25,25 +20,6 @@ class AppUsage(
             val (score, at) = (value as? String)?.split(',') ?: continue
             scores[key] = (score.toDoubleOrNull() ?: continue) to (at.toLongOrNull() ?: continue)
         }
-    }
-
-    /**
-     * Keys of the apps opened, last opened first. Only updated by [settle], so the strip
-     * doesn't reorder under the finger that just tapped it.
-     */
-    var recent by mutableStateOf(order())
-        private set
-
-    private fun order() = scores.entries.sortedByDescending { it.value.second }.map { it.key }
-
-    /** Counts [settle] calls, so the strip can scroll back to its start each time home comes back. */
-    var settled by mutableIntStateOf(0)
-        private set
-
-    /** Moves the latest launches to the front of [recent]; called once the home screen is out of sight. */
-    fun settle() {
-        recent = order()
-        settled++
     }
 
     fun record(key: String) {

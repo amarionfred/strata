@@ -31,7 +31,7 @@ final class OmarchyConfigs {
         files.put(".local/share/omarchy/default/bash/inputrc", source.read("default/bash/inputrc"));
         files.put(".local/share/omarchy/default/bash/shell", source.read("default/bash/shell").replace("/usr/share/", "${PREFIX}/share/"));
         files.put(".local/share/omarchy/default/bash/aliases", portableAliases(source.read("default/bash/aliases")));
-        files.put(BASH, "# Oma's native Android adapter for Omarchy " + REVISION + "\n"
+        files.put(BASH, "# Strata's native Android adapter for Omarchy " + REVISION + "\n"
                 + "export OMARCHY_PATH=\"$HOME/.local/share/omarchy\"\n"
                 + "export INPUTRC=\"$OMARCHY_PATH/default/bash/inputrc\"\n"
                 + "export EDITOR=\"${EDITOR:-nano}\"\n"

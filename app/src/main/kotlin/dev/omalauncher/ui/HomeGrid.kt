@@ -59,7 +59,6 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntRect
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toOffset
 import kotlinx.coroutines.launch
@@ -278,9 +277,7 @@ internal class Arrange {
  * or back out.
  *
  * Gestures live here, around the pager, rather than on each page: a drag that
- * turns the page has to survive leaving the page it started on. [room] at the
- * bottom has no tiles but takes swipes and long-presses like empty space; what's
- * drawn over it (the recent apps strip) can take them first. [turned] lays
+ * turns the page has to survive leaving the page it started on. [turned] lays
  * portrait's grid on its side, for landscape.
  *
  * With [per] of 2 (an unfolded foldable) each pager slot shows two of [pages]
@@ -305,9 +302,8 @@ internal fun HomeGrid(
     /** Moves an app within its folder to just before another of its apps, or with null to the end. */
     onReorder: (Shortcut, String?) -> Unit,
     modifier: Modifier = Modifier,
-    room: Dp = 0.dp,
     turned: Boolean = false,
-    /** Where the strip and the bar stand beside the grid; null for below it. */
+    /** Where the prompt bar stands beside the grid; null for below it. */
     side: HomeSide? = null,
     per: Int = 1,
 ) {
@@ -318,7 +314,7 @@ internal fun HomeGrid(
         val density = LocalDensity.current
         val gap = with(density) { HomeGap.roundToPx() }
         val outer = with(density) { EdgeGap.roundToPx() }
-        // The screen's edge on every side but the one the strip and the bar follow, which gets the gap between tiles.
+        // The screen's edge on every side but the one the prompt bar follows, which gets the gap between tiles.
         val pad =
             GridPad(
                 left = if (side == HomeSide.Left) gap else outer,
@@ -326,8 +322,7 @@ internal fun HomeGrid(
                 right = if (side == HomeSide.Right) gap else outer,
                 bottom = if (side == null) gap else outer,
             )
-        // The grid stops [room] short of the bottom; the pages and their gestures go on below it.
-        val height = constraints.maxHeight - with(density) { room.roundToPx() }
+        val height = constraints.maxHeight
         val width = constraints.maxWidth / per
         // Landscape turns portrait's grid on its side; the window's size (short side first, so both orientations
         // share it) remembers how many rows portrait had.

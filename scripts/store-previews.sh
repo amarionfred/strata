@@ -84,6 +84,12 @@ seed() {
   local json
   case $1 in
     google-calendar) json='{"cals":[{"name":"Personal","url":"https://calendar.google.com/calendar/ical/demo-personal/basic.ics","color":0,"on":true},{"name":"Work","url":"https://calendar.google.com/calendar/ical/demo-work/basic.ics","color":2,"on":true}],"days":14}' ;;
+    gestures) json='{"apps":["com.android.chrome","com.google.android.youtube","com.google.android.apps.maps","com.android.camera2","com.google.android.apps.messaging","com.google.android.dialer","com.google.android.apps.photos","com.google.android.calendar"],"labels":["Chrome","YouTube","Maps","Camera","Messages","Phone","Photos","Calendar"],"migrated":true}' ;;
+    # NS's API needs a key, read from the environment so it's never in this file: without one,
+    # ns keeps its "add your key" preview.
+    ns)
+      [ -n "${NS_API_KEY:-}" ] || return 0
+      json=$(printf '{"apiKey":"%s","station":{"uic":"8400058","name":"Amsterdam Centraal","lat":52.3791,"lng":4.9003},"saved":[],"favs":[{"uic":"8400621","name":"Utrecht Centraal","label":"Utrecht"},{"uic":"8400530","name":"Rotterdam Centraal","label":"Rotterdam"}]}' "$NS_API_KEY") ;;
     *) return 0 ;;
   esac
   printf '{"v":1,"savedAt":%s,"values":%s}' "$(date +%s)" "$json" > "$WORK/state.json"

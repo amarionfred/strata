@@ -6,7 +6,9 @@
 # google-calendar's feed script, and two sleeping `claude` processes stand in for claude-top's
 # Claude Code instances. `python` answers
 # codex-quota's and photoprism-random's scripts, widget-maker finds its script set up and a
-# draft waiting, and `ssh` streams a Flipper menu to flipper-zero. With "off", puts everything back.
+# draft waiting, and `ssh` streams a Flipper menu to flipper-zero. `agy` answers agy-limits, agenda
+# reads two calendars from local .ics files, and the voice widgets find themselves set up with
+# a reply read and a sentence dictated. With "off", puts everything back.
 set -u
 demo=/tmp/store-previews-demo
 ha=~/.config/omarchy-proot/home-assistant
@@ -18,6 +20,11 @@ photoprism=~/.config/photoprism-random/session.json
 owlmaker=~/.local/share/owlmaker/VERSION
 owlstatus=~/.cache/owlmaker/status.json
 flipper=~/.config/owl-flipper/host
+agy=~/.gemini/antigravity-cli/antigravity-oauth-token
+agenda=~/.config/gcal-agenda/urls
+voice=~/.local/share/oma-voice/store-version
+voicestate=~/.cache/oma-voice/state.json
+dictated=~/.cache/oma-speak/latest.txt
 
 # Moves a real file aside before the demo writes its own; "off" puts it back.
 aside() { [ -f "$1" ] && [ ! -f "$1.before-demo" ] && mv "$1" "$1.before-demo"; mkdir -p "${1%/*}"; }
@@ -25,10 +32,12 @@ aside() { [ -f "$1" ] && [ ! -f "$1.before-demo" ] && mv "$1" "$1.before-demo"; 
 if [ "${1:-}" = off ]; then
   for p in $(cat "$demo/claude.pids" 2>/dev/null); do kill "$p" 2>/dev/null; rm -f ~/.claude/sessions/"$p".json; done
   pid=$(cat ~/.cache/owl-flipper/feed.pid 2>/dev/null) && kill -- "-$pid" 2>/dev/null
+  [ -f "$demo/agenda-cache-new" ] && rm -rf ~/.cache/gcal-agenda
   rm -f ~/.cache/owl-flipper/frame.json ~/.cache/photoprism-random/demo.jpg ~/.cache/owlmaker/pending/made-demo-moon.owl
   rm -rf "$demo" /usr/local/bin/gh /usr/local/bin/curl /usr/local/bin/python3 /usr/local/bin/pgrep \
-    /usr/local/bin/python /usr/local/bin/claude /usr/local/bin/ssh
-  for f in "$ha" "$cursor" "$tesla" "$opencode" "$history" "$photoprism" "$owlmaker" "$owlstatus" "$flipper"; do
+    /usr/local/bin/python /usr/local/bin/claude /usr/local/bin/ssh /usr/local/bin/agy
+  for f in "$ha" "$cursor" "$tesla" "$opencode" "$history" "$photoprism" "$owlmaker" "$owlstatus" "$flipper" \
+    "$agy" "$agenda" "$voice" "$voicestate" "$dictated"; do
     [ -f "$f.before-demo" ] && mv "$f.before-demo" "$f" || rm -f "$f"
   done
   exit 0
@@ -223,3 +232,60 @@ case "$*" in
 esac
 EOF
 chmod +x /usr/local/bin/ssh
+
+# agy-limits: `agy` answers /usage like a signed-in account part way through its limits.
+aside "$agy"
+echo demo > "$agy"
+cat > /usr/local/bin/agy <<'EOF'
+#!/bin/sh
+at() { date -u -d "@$(( $(date +%s) + $1 ))" +%Y-%m-%dT%H:%M:%SZ; }
+cat <<JSON
+{"command":{"data":{"groups":[
+ {"name":"Gemini Models","buckets":[{"window":"5h","remaining_fraction":0.58,"reset_time":"$(at 8400)"},{"window":"weekly","remaining_fraction":0.81,"reset_time":"$(at 302400)"}]},
+ {"name":"Claude and GPT Models","buckets":[{"window":"5h","remaining_fraction":0.27,"reset_time":"$(at 5100)"},{"window":"weekly","remaining_fraction":0.64,"reset_time":"$(at 302400)"}]}]}}}
+JSON
+EOF
+chmod +x /usr/local/bin/agy
+
+# agenda: two made-up calendars over the next days as .ics files, read through file:// URLs,
+# with a weekly event so the recurrence goes through the real parser too.
+[ -d ~/.cache/gcal-agenda ] || touch "$demo/agenda-cache-new"
+/usr/bin/python3 - "$demo" <<'PY'
+import sys
+from datetime import datetime, timedelta
+demo = sys.argv[1]
+day = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+def stamp(days, h, m=0): return (day + timedelta(days=days, hours=h, minutes=m)).strftime("%Y%m%dT%H%M%S")
+def date(days): return (day + timedelta(days=days)).strftime("%Y%m%d")
+def cal(events):
+    lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//store previews//EN"]
+    for i, e in enumerate(events):
+        lines += ["BEGIN:VEVENT", "UID:demo-%d@previews" % i, "DTSTAMP:20260101T000000Z"] + e + ["END:VEVENT"]
+    return "\r\n".join(lines + ["END:VCALENDAR"]) + "\r\n"
+personal = [
+    ["SUMMARY:Call with Mom", "DTSTART:" + stamp(0, 19), "DTEND:" + stamp(0, 19, 30)],
+    ["SUMMARY:Mia's birthday", "DTSTART;VALUE=DATE:" + date(1), "DTEND;VALUE=DATE:" + date(2)],
+    ["SUMMARY:Dentist", "LOCATION:Dr. Weber", "DTSTART:" + stamp(2, 8, 30), "DTEND:" + stamp(2, 9, 15)],
+    ["SUMMARY:Climbing", "LOCATION:Boulderhalle", "DTSTART:" + stamp(3, 19), "DTEND:" + stamp(3, 21)],
+    ["SUMMARY:Farmers market", "DTSTART:" + stamp(5, 10), "DTEND:" + stamp(5, 12)],
+]
+work = [
+    ["SUMMARY:Standup", "DTSTART:" + stamp(1, 9, 30), "DTEND:" + stamp(1, 9, 45), "RRULE:FREQ=WEEKLY;COUNT=4"],
+    ["SUMMARY:Design review", "DTSTART:" + stamp(1, 14), "DTEND:" + stamp(1, 15)],
+    ["SUMMARY:Sprint planning", "DTSTART:" + stamp(4, 10), "DTEND:" + stamp(4, 11, 30)],
+]
+open(demo + "/personal.ics", "w").write(cal(personal))
+open(demo + "/work.ics", "w").write(cal(work))
+PY
+aside "$agenda"
+printf 'Personal = file://%s/personal.ics\nWork = file://%s/work.ics\n' "$demo" "$demo" > "$agenda"
+
+# terminal-voice and dictation: set up (the version their widget file checks for), the last
+# Codex reply read aloud, and a sentence dictated. The voice service itself isn't installed, so
+# nothing overwrites these while the previews are drawn.
+aside "$voice"
+printf '%s' '3.2-a17095f3' > "$voice"
+aside "$voicestate"
+printf '{"source":"codex","status":"已朗讀最新回覆","status_en":"Read the latest reply","awaiting":false,"reply_at":%s,"summary":"已修正登入頁的表單驗證，並為空白密碼新增兩個測試；全部測試都通過了。"}\n' "$(( $(date +%s) - 240 ))" > "$voicestate"
+aside "$dictated"
+printf '%s' '把首頁的標題改成粗體，然後再跑一次測試。' > "$dictated"

@@ -73,6 +73,7 @@ import androidx.compose.ui.window.PopupProperties
 import androidx.compose.ui.graphics.ColorFilter
 import dev.omalauncher.AndroidApp
 import dev.omalauncher.androidAppKey
+import dev.omalauncher.AndroidShortcut
 import androidx.compose.runtime.collectAsState
 import dev.omalauncher.Runtime
 import dev.omalauncher.linux.LinuxState
@@ -114,6 +115,18 @@ internal sealed interface AppHit {
         override val alias get() = if (app.profile != null && !app.isPrivate) "${app.label} ${if (app.clone) "clone" else "work"}" else null
 
         override fun paused(runtime: Runtime) = runtime.androidApps.paused(app.profile)
+    }
+
+    /** A shortcut an app put on the home screen, such as a website installed from a browser. */
+    data class Shortcut(
+        val shortcut: AndroidShortcut,
+    ) : AppHit {
+        override val key get() = "s:" + shortcut.key
+        override val label get() = shortcut.label
+        override val spoken get() = shortcut.spoken
+        override val alias get() = if (shortcut.profile != null) "${shortcut.label} ${if (shortcut.clone) "clone" else "work"}" else null
+
+        override fun paused(runtime: Runtime) = runtime.androidApps.paused(shortcut.profile)
     }
 }
 
@@ -164,7 +177,7 @@ internal class BarSearch(
     fun highlighted(picked: Int?) = picked?.coerceIn(-1, hits.lastIndex) ?: if (opensApp) 0 else -1
 }
 
-private fun allApps(runtime: Runtime): List<AppHit> = runtime.linuxApps.map { AppHit.Linux(it) } + runtime.androidApps.apps.filterNot { it.isPrivate }.map { AppHit.Android(it) }
+private fun allApps(runtime: Runtime): List<AppHit> = runtime.linuxApps.map { AppHit.Linux(it) } + runtime.androidApps.apps.filterNot { it.isPrivate }.map { AppHit.Android(it) } + runtime.androidApps.shortcuts.map { AppHit.Shortcut(it) }
 
 internal fun searchApps(
     runtime: Runtime,
@@ -176,15 +189,16 @@ internal fun searchApps(
     return BarSearch(ranked.map { it.first }, ranked.firstOrNull()?.let { isStrongMatch(it.second, query) } == true)
 }
 
-/** What the app cells do: open, pin to home, and the Android app's info and uninstall. */
+/** What the app cells do: open, pin to home, the Android app's info and uninstall, and removing a shortcut. */
 internal class AppHandlers(
     val launch: (AppHit) -> Unit,
     val pin: (AppHit) -> Unit,
     val info: (AndroidApp) -> Unit,
     val uninstall: (AndroidApp) -> Unit,
+    val remove: (AndroidShortcut) -> Unit,
 )
 
-/** The long-press menu of an app cell: pin to home, and for Android apps their info and uninstall. */
+/** The long-press menu of an app cell: pin to home, for Android apps their info and uninstall, and for shortcuts removing them. */
 private fun AppHit.actions(handlers: AppHandlers): List<Pair<String, () -> Unit>> =
     when (this) {
         is AppHit.Linux -> listOf("add to home" to { handlers.pin(this) })
@@ -194,6 +208,11 @@ private fun AppHit.actions(handlers: AppHandlers): List<Pair<String, () -> Unit>
                 "app info" to { handlers.info(app) },
                 if (app.system) null else "uninstall" to { handlers.uninstall(app) },
             )
+        is AppHit.Shortcut ->
+            listOf(
+                "add to home" to { handlers.pin(this) },
+                "remove" to { handlers.remove(shortcut) },
+            )
     }
 
 /** The app's icon and its silhouette (each null until loaded or if it has none), and a glyph for built-in apps (Files). */
@@ -201,6 +220,7 @@ private fun AppHit.icons(runtime: Runtime): Triple<ImageBitmap?, ImageBitmap?, I
     when (this) {
         is AppHit.Linux -> Triple(runtime.linuxIcons[app.id], runtime.linuxMasks[app.id], if (app.exec == FILES_COMMAND) Icons.Folder else null)
         is AppHit.Android -> Triple(runtime.androidApps.icons[app.key], runtime.androidApps.masks[app.key], null)
+        is AppHit.Shortcut -> Triple(runtime.androidApps.icons[shortcut.key], runtime.androidApps.masks[shortcut.key], null)
     }
 
 @Composable
@@ -379,6 +399,7 @@ internal fun AppPanel(
                                         )
                                     }
                                     DrawerTab.Work -> {
+                                        section("shortcuts", apps.shortcuts.filter { it.work }.map { AppHit.Shortcut(it) }.filter { it.key !in hidden })
                                         val paused = apps.workProfiles.any { apps.paused(it) }
                                         section(
                                             if (paused) "work apps paused" else "work apps",
@@ -402,6 +423,7 @@ internal fun AppPanel(
                                                 }
                                             }
                                         }
+                                        section("shortcuts", apps.shortcuts.filter { !it.work }.map { AppHit.Shortcut(it) }.filter { it.key !in hidden })
                                         section("android", apps.apps.filter { !it.work && !it.isPrivate }.map { AppHit.Android(it) }.filter { it.key !in hidden })
                                     }
                                 }

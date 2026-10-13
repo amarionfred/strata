@@ -31,6 +31,7 @@ Dates are when the build was uploaded to Play.
 - Linux touch input forwards simultaneous contacts with distinct IDs, batched
   frames and cancellation when Android cancels a gesture or its surface closes.
 - Dragging a widget previews neighbour movement while preserving widget sizes.
+- Browser shortcuts now appear on home and in the drawer (#63).
 
 ## 0.7.0 (versionCode 12) – 2026-10-13
 

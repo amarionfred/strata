@@ -7,10 +7,10 @@ pkg install -y curl && curl -fL https://raw.githubusercontent.com/amarionfred/st
 ```
 
 The script downloads the published APK, verifies it, enables the Termux connection,
-and opens the app chooser. Existing Termux settings are kept; changed settings
+and requests Android installation. Existing Termux settings are kept; changed settings
 are backed up beside `termux.properties` as `termux.properties.strata-backup`.
 
-1. In **Open with**, choose **Package installer**, not Termux. Allow installs from Termux if asked, then tap **Install** or **Update**, followed by **Open**.
+1. Allow installs from Termux if asked, then tap **Install** or **Update**, followed by **Open**. If **Open with** appears, choose **Package installer**.
 2. In **Strata → Setup**, tap **Grant command permission → Allow**.
 3. Tap **Choose default home** and select **Strata**.
 
@@ -22,6 +22,8 @@ when its checksum matches the latest release. Existing app data is kept.
 
 - No installer appeared, or you closed it: return to Termux and run the same installation command above. Choose **Package installer** in **Open with**.
 - A **Save file in ~/downloads/** dialog appeared: tap **Cancel**, return to Termux, and run the same installation command above. Choose **Package installer** when prompted.
+- A **termux-file-editor** error appeared: Termux tried to edit the APK. Tap **OK**, return to Termux, and run the same installation command above. The current script requests installation directly; no editor script is needed.
+- The script reports that Android could not open the installer directly: choose **Package installer** in the fallback chooser. The error is kept in `~/.cache/strata/installer.log`.
 - Download or checksum failed: check your connection and run the installation command again.
 - Android blocked installation: allow **Install unknown apps** for Termux, return to Termux, and run the same installation command above.
 - Terminal commands fail: in Strata's Setup tab, tap **Grant command permission**, then **Verify Termux connection**. Reopen Termux if needed.

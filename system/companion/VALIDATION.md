@@ -2,10 +2,12 @@
 
 Checked on 2026-10-13.
 
-The Termux installer has 13 passing host tests for first installation, reusing a
+The Termux installer has 17 passing host tests for first installation, reusing a
 verified download on retry, replacing an older APK, checksum failures, failed
-downloads, release selection, and preserving existing files and configuration. Its live
-download and checksum steps were checked against the published 0.5.0 APK.
+downloads, release selection, preserving existing files and configuration,
+installation request arguments, URI encoding, and fallback/error handling. Android
+commands are stubbed in these tests; they do not confirm a phone installation.
+The live download and checksum steps were checked against the published 0.5.0 APK.
 Android's installation and permission dialogs still need phone testing.
 
 | Check | Result |

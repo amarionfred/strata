@@ -1,9 +1,11 @@
 """Installer checks using temporary files; Android intents are not executed."""
 import hashlib
+import os
 from pathlib import Path
 import subprocess
 import tempfile
 import unittest
+from urllib.parse import quote, unquote, urlsplit
 
 
 SCRIPT = Path(__file__).resolve().parents[2] / "install.sh"
@@ -51,6 +53,64 @@ class InstallTests(unittest.TestCase):
 
     def downloads(self):
         return (self.directory / "downloads").read_text().splitlines()
+
+    def dispatch_installer(self, apk, am_status=0, chooser_status=0):
+        command = self.directory / "prefix/bin/am"
+        command.parent.mkdir(parents=True, exist_ok=True)
+        command.write_text('#!/bin/sh\nprintf "%s\\n" "$@"\nexit ' + str(am_status) + '\n')
+        command.chmod(0o700)
+        return self.shell('''
+            strata_dispatch_fixture="$1"
+            strata_chooser_status="$3"
+            PREFIX="$strata_dispatch_fixture/prefix"
+            termux-open() {
+                printf '%s\\n' "$@" > "$strata_dispatch_fixture/chooser"
+                return "$strata_chooser_status"
+            }
+            open_installer "$2" "$strata_dispatch_fixture/installer.log"
+            printf INSTALL_REQUEST_SENT
+        ''', self.directory, apk, chooser_status)
+
+    def test_direct_install_uses_content_uri_and_read_grant_without_file_viewer(self):
+        apk = self.directory / "Strata #100% ? café.apk"
+        apk.write_bytes(b"APK test fixture")
+        result = self.dispatch_installer(apk)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        arguments = (self.directory / "installer.log").read_text().splitlines()
+        self.assertEqual(arguments[:3], ["start", "--user", str(os.getuid() // 100000)])
+        self.assertEqual(arguments[arguments.index("-a") + 1], "android.intent.action.INSTALL_PACKAGE")
+        self.assertEqual(arguments[arguments.index("-t") + 1], "application/vnd.android.package-archive")
+        self.assertIn("--grant-read-uri-permission", arguments)
+        uri = arguments[arguments.index("-d") + 1]
+        self.assertEqual(uri, "content://com.termux.files" + quote(str(apk.resolve()), safe="/"))
+        self.assertEqual(unquote(urlsplit(uri).path), str(apk.resolve()))
+        self.assertFalse((self.directory / "chooser").exists())
+
+    def test_direct_install_failure_keeps_diagnostics_and_opens_chooser(self):
+        apk = self.directory / "strata.apk"
+        apk.write_bytes(b"APK test fixture")
+        result = self.dispatch_installer(apk, am_status=1)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("could not open the installer directly", result.stderr)
+        self.assertIn("android.intent.action.INSTALL_PACKAGE", result.stderr)
+        self.assertEqual((self.directory / "chooser").read_text().splitlines(), [
+            "--chooser", "--view", "--content-type", "application/vnd.android.package-archive", str(apk)])
+        self.assertIn("INSTALL_REQUEST_SENT", result.stdout)
+
+    def test_both_install_routes_failing_stops_and_reports_log(self):
+        apk = self.directory / "strata.apk"
+        apk.write_bytes(b"APK test fixture")
+        result = self.dispatch_installer(apk, am_status=1, chooser_status=1)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertNotIn("INSTALL_REQUEST_SENT", result.stdout)
+        self.assertIn(str(self.directory / "installer.log"), result.stderr)
+
+    def test_missing_apk_does_not_open_installer_or_file_viewer(self):
+        result = self.dispatch_installer(self.directory / "missing.apk")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertFalse((self.directory / "installer.log").exists())
+        self.assertFalse((self.directory / "chooser").exists())
+        self.assertNotIn("INSTALL_REQUEST_SENT", result.stdout)
 
     def test_verified_cached_apk_is_reused_after_checking_current_release(self):
         result = self.prepare_release(cached=b"published APK")

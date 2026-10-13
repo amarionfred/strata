@@ -31,6 +31,7 @@ ensure_tools() {
     if ! command -v termux-open >/dev/null || ! command -v termux-reload-settings >/dev/null; then
         packages+=(termux-tools)
     fi
+    [[ -x "$PREFIX/bin/am" ]] || packages+=(termux-am)
     if (( ${#packages[@]} )); then
         pkg install -y "${packages[@]}" || fail 'Package download failed. Check your connection and run this script again.'
     fi
@@ -121,6 +122,39 @@ connect_termux() {
     termux-reload-settings || printf 'Reopen Termux once if its settings did not reload.\n'
 }
 
+apk_uri() {
+    local path="$1" uri=content://com.termux.files char encoded i LC_ALL=C
+    for ((i = 0; i < ${#path}; i++)); do
+        char=${path:i:1}
+        case "$char" in
+            [a-zA-Z0-9/._~-]) uri+=$char ;;
+            *) printf -v encoded '%%%02X' "'$char"; uri+=$encoded ;;
+        esac
+    done
+    printf '%s\n' "$uri"
+}
+
+open_installer() {
+    local apk="$1" log="$2" uri
+    [[ -f "$apk" && -r "$apk" ]] || fail 'The downloaded APK is missing or unreadable. Run the same installation command again.'
+    apk=$(realpath -- "$apk")
+    uri=$(apk_uri "$apk")
+    # INSTALL_PACKAGE excludes generic file viewers such as Termux's editor.
+    # Use Termux's am; Android's /system/bin/am requires an ADB shell.
+    if "$PREFIX/bin/am" start --user "$((UID / 100000))" \
+        -a android.intent.action.INSTALL_PACKAGE \
+        -t application/vnd.android.package-archive \
+        -d "$uri" --grant-read-uri-permission > "$log" 2>&1; then
+        return
+    fi
+    printf '\nAndroid could not open the installer directly:\n' >&2
+    cat -- "$log" >&2
+    printf '\nOpening the app chooser instead. Choose Package installer.\n'
+    printf 'If a Save file or termux-file-editor dialog appears, close it; the APK does not need an editor.\n'
+    termux-open --chooser --view --content-type application/vnd.android.package-archive "$apk" \
+        || fail "Could not open Android installation. Details saved in $log."
+}
+
 main() {
     set -euo pipefail
     umask 077
@@ -139,12 +173,12 @@ main() {
     printf '\n2/3 Connecting Termux…\n'
     connect_termux "$HOME"
     printf '\n3/3 Opening Android installation…\n'
-    printf 'Choose Package installer in Open with. Allow installs from Termux if asked, then tap Install or Update.\n'
+    printf 'Allow installs from Termux if asked, then tap Install or Update.\n'
+    printf 'If an Open with chooser appears, select Package installer.\n'
     printf 'After installation, open Strata → Setup → Grant command permission → Allow.\n'
     printf 'For your first installation, tap Choose default home and select Strata.\n'
     printf '\nIf installation closes, return to Termux and run the same installation command again.\n'
-    termux-open --chooser --view --content-type application/vnd.android.package-archive "$apk" \
-        || fail 'The app chooser could not be opened. Run the same installation command again.'
+    open_installer "$apk" "$cache/installer.log"
 }
 
 if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then main "$@"; fi

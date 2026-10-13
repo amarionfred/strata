@@ -1,8 +1,11 @@
-# Native system runtime — developer preview
+# Strata native Linux runtime
 
 The intended product is a complete phone interface with Android apps and native
 Linux tools. This component implements the native runtime foundation. It is not
 yet a complete phone OS or a validated Tecno SystemUI replacement.
+
+The Strata app now controls this module from its System, Terminal, Software, and
+Files tabs. [Install](../README.md#root-and-linux).
 
 This optional module requires root. It keeps the existing Android kernel and app
 framework. There is no VM, CPU emulation, PRoot, or fake UID in this runtime.
@@ -136,8 +139,8 @@ Host success does not validate a phone's SELinux rules or root-manager behavior.
 
 ## Remaining system integration
 
-The complete product also needs the privileged Android companion and app/runtime
-bridge, unified files and windows, notification shade, lock screen, recents,
+The app now includes a root command service and a runtime controller bridge.
+The complete product still needs unified files and windows, notification shade, lock screen, recents,
 settings, installer UX, and tested recovery on each supported Android/vendor
 build. Resource overlays can change permitted resources; replacing arbitrary
 system behavior requires version-specific platform integration. No stock Android

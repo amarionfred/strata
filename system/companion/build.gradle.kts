@@ -7,8 +7,8 @@ android {
         applicationId = "dev.omalauncher.systempreview"
         minSdk = 29
         targetSdk = 36
-        versionCode = 4
-        versionName = "0.4.0-preview"
+        versionCode = 5
+        versionName = "0.5.0-preview"
     }
     buildFeatures { aidl = true }
     compileOptions {

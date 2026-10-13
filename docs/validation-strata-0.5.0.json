@@ -1,0 +1,42 @@
+{
+  "date_utc": "2026-10-13",
+  "application_id": "dev.omalauncher.systempreview",
+  "version_name": "0.5.0-preview",
+  "version_code": 5,
+  "apk": "strata.apk",
+  "bytes": 2855462,
+  "sha256": "26e959b015d0af831dc6e45cc471a375465d27013836fda387c59d4c77686b8e",
+  "host_tests": {
+    "system/companion": {
+      "tests": 28,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "system/tests": {
+      "tests": 11,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  },
+  "previous_unchanged_launcher_checks": "validation-strata-0.4.0.json",
+  "lint": {
+    "errors": 0,
+    "warnings": 15
+  },
+  "signing": "APK v2 verified; same preview certificate as 0.2, 0.3, and 0.4",
+  "signer_sha256": "48e6c57d0d87daf1d0bbd8bbe0372c57eb584bd525fccd95f5092938dd10b04f",
+  "runtime_modules": {
+    "strata-runtime-0.5.0-arm.zip": "85b973e2f6be3bc52fbb1fe7f25d90c1604280f3e4c9985940326ccd1d5c4d47",
+    "strata-runtime-0.5.0-arm64.zip": "4fbf967edc30f15a6234a28c6f2c7f472256f5f79ca3fd5f255341df91fedd67",
+    "strata-runtime-0.5.0-x64.zip": "80cecc49b1cc5f1f200b9c53e1395e03057edceb8bf40eca8b0aceb258557da9"
+  },
+  "device_validation": "Not installed or tested on a phone. Tecno KL4 remains stock and unrooted; root features unavailable.",
+  "limitations": [
+    "No universal root installation",
+    "Runtime module requires existing Magisk",
+    "Android SystemUI replacement unfinished",
+    "Root-manager behavior, interactive terminals, and APK lifecycle need device tests"
+  ]
+}

@@ -1,10 +1,11 @@
 # Strata Android app
 
-Native Termux commands and packages, Android app search, files, notifications,
-floating controls, and Omarchy themes. [Install](INSTALL.md).
+Device root commands, native Linux packages and services, Termux terminals,
+Android apps, files, notifications, floating controls, and Omarchy themes. [Install](INSTALL.md).
 
 Android 10+. Shizuku is optional for Android controls. This app keeps Android
-installed and uses native processes. It does not replace SystemUI or grant root.
+installed and uses native processes. It uses an existing root manager; it does
+not root the phone or replace SystemUI.
 
 ## Build
 
@@ -19,7 +20,19 @@ Application ID: `dev.omalauncher.systempreview`, retained for existing installat
 
 ## Runtime
 
-Commands use Termux's `RUN_COMMAND` API. Jobs store output and exit codes locally;
+Root jobs run in a non-exported foreground service through `su -c`. A UID check
+must return 0 before the command executes. Output and exit status are recorded;
+a failed command can still have a verified root identity. Jobs have a ten-minute
+timeout. Terminating the client does not guarantee termination of every process
+started by a root manager, so interrupted jobs report unknown process state.
+Root jobs are initiated in the visible app and are not automatically retried.
+
+The System tab controls the [native runtime module](../README.md). Linux packages
+use Alpine's `apk`; foreground services are syntax-checked and saved atomically.
+Restart Linux to apply service changes. Files and packages persist across restarts.
+The runtime requires Magisk and does not supply missing kernel capabilities.
+
+Termux commands use its `RUN_COMMAND` API. Jobs store output and exit codes locally;
 interactive shells open in Termux. Package installation uses Termux repositories.
 User overrides live in `~/.config/oma/session.sh`.
 

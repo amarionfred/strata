@@ -36,6 +36,11 @@
             </intent-filter>
         </activity>
         <receiver android:name=".CommandResultReceiver" android:exported="false" />
+        <service android:name=".RootJobsService" android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="User-initiated root shell, native Linux package installation and service management through an installed root manager" />
+        </service>
         <activity android:name=".PinShortcutActivity" android:exported="false"
             android:excludeFromRecents="true" android:noHistory="true" android:taskAffinity="">
             <intent-filter>

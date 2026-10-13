@@ -7,6 +7,15 @@ it is not a device-qualified replacement OS. It preserves the no-flashing/no-unl
 no-VM constraints. It does not silently mark the original real-root, kernel
 control, or complete SystemUI replacement requirements as satisfied.
 
+## Root integration in 0.5.0
+
+The app now connects to an existing root manager with a UID-checked `su` service
+and controls the native Magisk runtime. System provides runtime startup, shutdown,
+autostart, and service scripts. Terminal and Software support native Linux commands
+and Alpine packages alongside Termux. The current Tecno is still unrooted, so these
+root features are unavailable on it. Full SystemUI integration remains unfinished.
+The original baseline below describes the features that work without device root.
+
 ## Architectural change
 
 Build the common runtime as native Android-compatible programs plus a coordinated

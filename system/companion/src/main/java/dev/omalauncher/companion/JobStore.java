@@ -24,7 +24,7 @@ final class JobStore {
             int pending = 0;
             for (int i = 0; i < current.length(); i++)
                 if ("waiting".equals(current.getJSONObject(i).optString("state"))) pending++;
-            if (pending >= LIMIT) throw new IllegalStateException("16 jobs are still awaiting results. Check Termux before starting more.");
+            if (pending >= LIMIT) throw new IllegalStateException("16 jobs are still awaiting results. Check running jobs before starting more.");
             String id = UUID.randomUUID().toString();
             next.put(new JSONObject().put("id", id).put("kind", kind).put("label", label)
                     .put("time", System.currentTimeMillis()).put("state", "waiting"));
@@ -57,4 +57,3 @@ final class JobStore {
         return text.length() <= OUTPUT_LIMIT ? text : text.substring(text.length() - OUTPUT_LIMIT);
     }
 }
-

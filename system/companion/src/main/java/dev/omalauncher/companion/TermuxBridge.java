@@ -22,6 +22,14 @@ final class TermuxBridge {
         return context.checkSelfPermission(PERMISSION) == PackageManager.PERMISSION_GRANTED;
     }
     static String run(Activity context, String kind, String label, String script, boolean interactive) {
+        return dispatch(context, kind, label, interactive ? Commands.interactive() : script, interactive);
+    }
+    static String rootSession(Activity context, boolean linux) {
+        if (context.getSystemService(android.app.KeyguardManager.class).isKeyguardLocked())
+            throw new IllegalStateException("Unlock the phone before starting a root session.");
+        return dispatch(context, "interactive", linux ? "Linux root terminal" : "Android root terminal", RootCommands.interactive(linux), true);
+    }
+    private static String dispatch(Activity context, String kind, String label, String script, boolean interactive) {
         if (!installed(context)) throw new IllegalStateException("Install and open Termux first, then connect it in Setup.");
         if (!permitted(context)) throw new IllegalStateException("Grant the Termux command permission in Setup.");
         String id = JobStore.create(context, kind, label);
@@ -34,8 +42,7 @@ final class TermuxBridge {
         Intent command = new Intent("com.termux.RUN_COMMAND")
                 .setComponent(new ComponentName("com.termux", "com.termux.app.RunCommandService"))
                 .putExtra("com.termux.RUN_COMMAND_PATH", Commands.PREFIX + "/bin/bash")
-                .putExtra("com.termux.RUN_COMMAND_ARGUMENTS", interactive
-                        ? new String[]{"--noprofile", "--norc", "-c", Commands.interactive()} : new String[]{"--noprofile", "--norc", "-c", script})
+                .putExtra("com.termux.RUN_COMMAND_ARGUMENTS", new String[]{"--noprofile", "--norc", "-c", script})
                 .putExtra("com.termux.RUN_COMMAND_WORKDIR", Commands.HOME)
                 .putExtra("com.termux.RUN_COMMAND_BACKGROUND", !interactive)
                 .putExtra("com.termux.RUN_COMMAND_SESSION_ACTION", "0")

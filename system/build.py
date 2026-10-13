@@ -72,7 +72,8 @@ def build(architecture, zig):
     compiler += [str(SYSTEM / "native/session.c"), "-o", str(binary)]
     subprocess.run(compiler, check=True,
                    env={**os.environ, "ZIG_GLOBAL_CACHE_DIR": str(REPO / ".local/toolchains/zig-cache")})
-    destination = cache / "dist" / f"oma-native-runtime-0.1.0-{architecture}.zip"
+    properties = dict(line.split("=", 1) for line in (SYSTEM / "module/module.prop").read_text().splitlines() if "=" in line)
+    destination = cache / "dist" / f"strata-runtime-{properties['version']}-{architecture}.zip"
     destination.parent.mkdir(parents=True, exist_ok=True)
     temporary = destination.with_suffix(".zip.tmp")
     with zipfile.ZipFile(temporary, "w") as output:

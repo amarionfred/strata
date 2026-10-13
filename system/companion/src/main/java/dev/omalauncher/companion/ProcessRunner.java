@@ -5,7 +5,7 @@ import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.*;
 
-/** Bounded native execution used only by the typed administration service. */
+/** Bounded native execution for root jobs and the typed administration service. */
 final class ProcessRunner {
     static final int MAX_OUTPUT = 65536;
     static final class Result {
@@ -38,7 +38,7 @@ final class ProcessRunner {
         try {
             if (!process.waitFor(timeoutMillis, TimeUnit.MILLISECONDS)) {
                 process.destroyForcibly();
-                throw new TimeoutException("Android command exceeded " + timeoutMillis + " ms");
+                throw new TimeoutException("Command exceeded " + timeoutMillis + " ms");
             }
             return new Result(process.exitValue(), output.get(1000, TimeUnit.MILLISECONDS));
         } finally {
@@ -48,4 +48,3 @@ final class ProcessRunner {
         }
     }
 }
-

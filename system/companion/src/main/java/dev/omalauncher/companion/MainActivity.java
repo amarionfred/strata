@@ -29,9 +29,9 @@ public final class MainActivity extends Activity {
     private OmarchyPalette palette;
     private final Handler handler = new Handler(Looper.getMainLooper());
     private final ExecutorService worker = Executors.newSingleThreadExecutor();
-    private final SharedPreferences.OnSharedPreferenceChangeListener jobsChanged = (prefs, key) -> handler.post(this::updateJobs);
+    private final SharedPreferences.OnSharedPreferenceChangeListener jobsChanged = (prefs, key) -> handler.post(() -> { updateJobs(); updateStatus(); });
     private LinearLayout root, content, history;
-    private TextView status, adminStatus, adminOutput, themeStatus;
+    private TextView status, adminStatus, adminOutput, themeStatus, rootStatus;
     private EditText configEditor;
     private AdminClient admin;
     private String tab = "Home", lastAdminOutput = "Read the device state to check the connected service.";
@@ -128,7 +128,7 @@ public final class MainActivity extends Activity {
             getWindow().getDecorView().setSystemUiVisibility(flags);
         }
         root.removeAllViews();
-        history = null; configEditor = null; adminStatus = null; adminOutput = null; themeStatus = null;
+        history = null; configEditor = null; adminStatus = null; adminOutput = null; themeStatus = null; rootStatus = null;
         appRows = null; appTabs = null; appQuery = null;
         LinearLayout heading = column();
         heading.setPadding(dp(20), dp(14), dp(20), dp(8));
@@ -142,6 +142,7 @@ public final class MainActivity extends Activity {
         root.addView(scroll, new LinearLayout.LayoutParams(-1, 0, 1));
         text(content, tab, 30, TEXT, false);
         switch (tab) {
+            case "System": system(); break;
             case "Terminal": terminal(); break;
             case "Software": software(); break;
             case "Files": files(); break;
@@ -155,7 +156,7 @@ public final class MainActivity extends Activity {
         nav.setHorizontalScrollBarEnabled(false);
         LinearLayout items = new LinearLayout(this);
         items.setPadding(dp(8), 0, dp(8), dp(4));
-        for (String name : new String[]{"Home", "Terminal", "Software", "Files", "Themes", "Controls", "Inbox", "Setup"}) {
+        for (String name : new String[]{"Home", "System", "Terminal", "Software", "Files", "Themes", "Controls", "Inbox", "Setup"}) {
             Button button = button(items, name, () -> { tab = name; render(); });
             button.setTextColor(name.equals(tab) ? ACCENT : MUTED);
             button.setMinWidth(0);
@@ -219,14 +220,16 @@ public final class MainActivity extends Activity {
     }
     private void updateStatus() {
         if (status == null || isDestroyed()) return;
-        status.setText((TermuxBridge.installed(this) ? (TermuxBridge.permitted(this) ? "Native runtime permission granted" : "Native runtime needs permission") : "Connect native runtime in Setup")
+        status.setText(RootJobsService.status(this)
                 + "  ·  " + (admin != null && admin.service != null ? "Android controls connected" : "Android controls offline"));
+        if (rootStatus != null) rootStatus.setText(RootJobsService.status(this));
         if (adminStatus != null && admin != null) adminStatus.setText(admin.status());
         if (themeStatus != null) themeStatus.setText(OmarchyThemes.nativeStatus(this));
     }
     private void home() {
         LinearLayout workspace = card("Your workspace", "Native tools, Android apps, and phone controls in one place.");
         button(workspace, "Open terminal", () -> { tab = "Terminal"; render(); });
+        button(workspace, "Root and Linux services", () -> { tab = "System"; render(); });
         button(workspace, "Omarchy themes · " + OmarchyThemes.title(palette), () -> { tab = "Themes"; render(); });
         button(workspace, "Connect runtime and controls", () -> { tab = "Setup"; render(); });
         LinearLayout apps = card("Applications", "Search names or packages. Work and private apps keep their own profiles.");
@@ -278,7 +281,15 @@ public final class MainActivity extends Activity {
         if (count == 0) text(appRows, appTab == AppPolicy.Kind.PRIVATE ? "Unlock private space to view its apps." : "No matching apps", 14, MUTED, false);
     }
     private void terminal() {
-        LinearLayout box = card("Run a command", "Each job loads installed Omarchy shell defaults, then your session.sh overrides. Output arrives when the process exits.");
+        LinearLayout privileged = card("Root shell", "Requires an already rooted phone. Android commands use the phone's shell; Linux commands use the running Strata runtime. Output appears when the command exits.");
+        EditText rootCommand = edit(privileged, "id; uname -a", ui.getString("root-command", "id; uname -a"), true);
+        remember(rootCommand, "root-command");
+        button(privileged, "Run as Android root", () -> rootRun("terminal", "Android root command", RootCommands.command(rootCommand.getText().toString())));
+        button(privileged, "Run as Linux root", () -> rootRun("terminal", "Linux root command", RootCommands.linuxShell(rootCommand.getText().toString())));
+        text(privileged, "For prompts, editors, and longer sessions, open a terminal below. Termux needs its own root approval. Noninteractive jobs have a ten-minute limit; use System for persistent services.", 13, MUTED, false);
+        button(privileged, "Open Android root terminal", () -> TermuxBridge.rootSession(this, false));
+        button(privileged, "Open Linux root terminal", () -> TermuxBridge.rootSession(this, true));
+        LinearLayout box = card("Termux shell", "Each job loads installed Omarchy shell defaults, then your session.sh overrides. Termux packages use the app's own permissions.");
         EditText command = edit(box, "id; uname -a", ui.getString("command", "id; uname -a"), true);
         remember(command, "command");
         button(box, "Run", () -> run("terminal", command.getText().toString(), Commands.terminal(command.getText().toString())));
@@ -293,8 +304,54 @@ public final class MainActivity extends Activity {
         updateJobs();
         return id;
     }
+    private String rootRun(String kind, String label, String script) {
+        String id = RootJobsService.start(this, kind, label, script);
+        Toast.makeText(this, "Root command queued. Allow Strata if your root manager asks.", Toast.LENGTH_LONG).show();
+        updateJobs();
+        return id;
+    }
+    private void system() {
+        LinearLayout access = card("Device root", "An installed root manager must grant Strata access. USB debugging, Shizuku, and a Linux sudo package do not root Android.");
+        rootStatus = text(access, "", 14, ACCENT, false);
+        button(access, "Request root and check identity", () -> rootRun("inspect", "Root identity and kernel", RootCommands.inspect()));
+        button(access, "Android processes", () -> rootRun("inspect", "Android processes", "exec /system/bin/ps -A"));
+        button(access, "Kernel and mounts", () -> rootRun("inspect", "Kernel and mounts", "/system/bin/uname -a; /system/bin/cat /proc/mounts"));
+        LinearLayout runtime = card("Native Linux", "Install the Strata runtime module through Magisk, then reboot once. Linux shares Android's kernel and stores its files on the phone.");
+        button(runtime, "Runtime downloads", () -> openUrl("https://github.com/amarionfred/strata/releases/latest"));
+        for (String action : new String[]{"status", "start", "stop", "autostart on", "autostart off"}) {
+            String label = action.startsWith("autostart") ? (action.endsWith("on") ? "Start Linux after reboot" : "Disable Linux autostart")
+                    : action.substring(0, 1).toUpperCase(Locale.ROOT) + action.substring(1) + " Linux";
+            button(runtime, label, () -> rootRun("runtime", label, RootCommands.control(action)));
+        }
+        button(runtime, "Linux processes", () -> rootRun("inspect", "Linux processes", RootCommands.linux("/bin/ps", "-ef")));
+        button(runtime, "Startup log", () -> rootRun("files", "Linux startup log", "exec /system/bin/tail -c 60000 /data/adb/oma-system/session.log"));
+        LinearLayout services = card("Linux services", "Save a foreground shell script, then stop and start Linux to load it. Services restart when they exit and can run after Strata closes. Previous scripts are kept in hidden backup files.");
+        EditText name = edit(services, "Service name", ui.getString("service-name", ""), false);
+        remember(name, "service-name");
+        EditText script = edit(services, "exec your-program --foreground", ui.getString("service-script", ""), true);
+        script.setMinLines(4); remember(script, "service-script");
+        button(services, "Save and enable service", () -> rootRun("service", "Save service", RootCommands.saveService(name.getText().toString().trim(), script.getText().toString())));
+        button(services, "Disable service", () -> rootRun("service", "Disable service", RootCommands.serviceEnabled(name.getText().toString().trim(), false)));
+        button(services, "Enable service", () -> rootRun("service", "Enable service", RootCommands.serviceEnabled(name.getText().toString().trim(), true)));
+        text(services, "Enable and disable changes also take effect after stopping and starting Linux.", 13, MUTED, false);
+        button(services, "Read saved service", () -> rootRun("files", "Service script", RootCommands.linux("/bin/cat", "/etc/oma-system/services/" + RootCommands.serviceName(name.getText().toString().trim()))));
+        button(services, "Service log", () -> rootRun("files", "Service log", RootCommands.linux("/usr/bin/tail", "-c", "60000", "/var/log/oma-system/" + RootCommands.serviceName(name.getText().toString().trim()) + ".log")));
+        button(services, "List services", () -> rootRun("files", "Linux services", RootCommands.linux("/bin/ls", "-la", "/etc/oma-system/services")));
+        history = card("System jobs", "Tap a job for its output and exit status.");
+    }
     private void software() {
-        LinearLayout box = card("Native packages", "Install tools in your Termux environment. Android apps stay available through their usual installers.");
+        LinearLayout linux = card("Linux packages", "Requires root and a running Strata runtime. Alpine's apk installs packages into its persistent Linux filesystem.");
+        EditText linuxName = edit(linux, "sudo, python3, git…", "", false);
+        button(linux, "Install Linux package", () -> {
+            String name = linuxName.getText().toString().trim();
+            String command = RootCommands.install(name);
+            new AlertDialog.Builder(this).setTitle("Install " + name + " in Linux?")
+                    .setMessage("Download and install this package and its dependencies in the Strata runtime.")
+                    .setNegativeButton("Cancel", null).setPositiveButton("Install", (dialog, which) -> safely(() -> rootRun("install", "Install Linux package: " + name, command))).show();
+        });
+        button(linux, "Refresh Linux repositories", () -> rootRun("packages", "Refresh Linux repositories", RootCommands.linux("/sbin/apk", "update")));
+        button(linux, "Installed Linux packages", () -> rootRun("packages", "Installed Linux packages", RootCommands.linux("/sbin/apk", "info")));
+        LinearLayout box = card("Termux packages", "Install tools in your Termux environment. Android apps stay available through their usual installers.");
         EditText name = edit(box, "python, git, nano…", "", false);
         button(box, "Install package", () -> {
             String packageName = name.getText().toString().trim();
@@ -398,6 +455,11 @@ public final class MainActivity extends Activity {
         });
     }
     private void files() {
+        LinearLayout systemFiles = card("Root filesystem", "Read Android paths with device root. The Linux filesystem is at " + RootCommands.ROOT + ".");
+        EditText path = edit(systemFiles, "/data/adb/oma-system/rootfs/root", ui.getString("root-path", RootCommands.ROOT + "/root"), false);
+        remember(path, "root-path");
+        button(systemFiles, "List directory as root", () -> rootRun("files", "Root directory", RootCommands.files(path.getText().toString(), false)));
+        button(systemFiles, "Read text file as root", () -> rootRun("files", "Root file", RootCommands.files(path.getText().toString(), true)));
         LinearLayout box = card("Native home", "Persistent files in your Termux home directory.");
         button(box, "List home files", () -> run("files", "Home files", "ls -la -- \"$HOME\""));
         button(box, "Browse and open a file", () -> startActivityForResult(new Intent(Intent.ACTION_OPEN_DOCUMENT)
@@ -517,7 +579,11 @@ public final class MainActivity extends Activity {
         }
     }
     private void setup() {
-        LinearLayout runtime = card("1 / Native runtime", "Install Termux, open it once to initialize its packages, then enable command access.");
+        LinearLayout rootSetup = card("Root and Linux", "Root features require a phone that is already rooted. This app cannot root a stock phone. Grant Strata access in your root manager; the Linux runtime module currently requires Magisk.");
+        button(rootSetup, "Request root and check identity", () -> rootRun("inspect", "Root identity and kernel", RootCommands.inspect()));
+        button(rootSetup, "Runtime installation instructions", () -> openUrl("https://github.com/amarionfred/strata#root-and-linux"));
+        button(rootSetup, "Manage root and Linux", () -> { tab = "System"; render(); });
+        LinearLayout runtime = card("Termux terminal", "Install Termux and open it once. It supplies interactive terminals and packages that also work without root.");
         button(runtime, "Termux downloads", () -> openUrl("https://github.com/termux/termux-app#installation"));
         button(runtime, "Open Termux", () -> openPackage("com.termux"));
         String setupCommand = "mkdir -p ~/.termux && printf '\\nallow-external-apps = true\\n' >> ~/.termux/termux.properties && termux-reload-settings";
@@ -532,14 +598,14 @@ public final class MainActivity extends Activity {
             requestPermissions(new String[]{TermuxBridge.PERMISSION}, 720);
         });
         button(runtime, "Runtime permission settings", () -> startActivity(new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:" + getPackageName()))));
-        button(runtime, "Verify native runtime", () -> run("inspect", "Runtime identity", Commands.inspect()));
+        button(runtime, "Verify Termux connection", () -> run("inspect", "Termux identity", Commands.inspect()));
         button(runtime, "Connect Omarchy themes and configs", () -> { tab = "Themes"; render(); });
-        LinearLayout management = card("2 / Android controls", "Start Shizuku and allow Strata to use it. Restart Shizuku after rebooting your phone.");
+        LinearLayout management = card("Android controls", "Start Shizuku and allow Strata to use it. Restart Shizuku after rebooting your phone.");
         button(management, "Shizuku downloads and setup", () -> openUrl("https://shizuku.rikka.app/guide/setup/"));
         button(management, "Open Shizuku", () -> openPackage("moe.shizuku.privileged.api"));
         button(management, "Authorize controls", () -> admin.request());
         adminStatus = text(management, "", 14, ACCENT, false);
-        LinearLayout interfaceBox = card("3 / Your interface", "Use Strata as home and open its panels from other apps. Android's secure lock screen, system shade, and other apps keep their own interface in this preview.");
+        LinearLayout interfaceBox = card("Your interface", "Use Strata as home and open its panels from other apps. Android's secure lock screen, system shade, and other apps keep their own interface in this preview.");
         if (Build.VERSION.SDK_INT >= 35) button(interfaceBox, catalog.privateShown() ? "Hide private-space tab" : "Show private-space tab", () -> {
             catalog.privateShown(!catalog.privateShown()); appTab = AppPolicy.Kind.PERSONAL; render();
         });
@@ -601,11 +667,13 @@ public final class MainActivity extends Activity {
     private void showJob(JSONObject job) {
         String text = DateFormat.getDateTimeInstance().format(new Date(job.optLong("time"))) + "\n" + job.optString("label") + "\n\n";
         if ("waiting".equals(job.optString("state")))
-            text += "Awaiting a Termux result. This does not confirm that the process is running. Check Termux if it does not return.\n";
+            text += job.optString("kind").startsWith("root:")
+                    ? "Awaiting a root result. Check your root manager for a permission request. If Strata was interrupted, process state is unknown; check running processes before repeating the command.\n"
+                    : "Awaiting a Termux result. This does not confirm that the process is running. Check Termux if it does not return.\n";
         else text += (job.has("exit") ? "Process exit: " + job.optInt("exit") + "\n" : "")
                 + job.optString("error") + "\n" + job.optString("stdout")
                 + (job.optString("stderr").isEmpty() ? "" : "\n[stderr]\n" + job.optString("stderr"))
-                + (job.optBoolean("truncated") ? "\n[Termux or Strata truncated this output]" : "");
+                + (job.optBoolean("truncated") ? "\n[output truncated]" : "");
         ScrollView scroll = new ScrollView(this);
         TextView output = new TextView(this); output.setPadding(dp(20), dp(12), dp(20), dp(12));
         output.setTypeface(Typeface.MONOSPACE); output.setTextSize(12); output.setTextIsSelectable(true); output.setText(text);
@@ -613,10 +681,10 @@ public final class MainActivity extends Activity {
         AlertDialog.Builder dialog = new AlertDialog.Builder(this).setTitle("Job result").setView(scroll).setPositiveButton("Close", null);
         if ("waiting".equals(job.optString("state"))) dialog.setNeutralButton("Stop tracking", (prompt, choice) ->
                 new AlertDialog.Builder(this).setTitle("Stop waiting for this result?")
-                        .setMessage("This does not stop the native process. Check or stop it in Termux before running the same operation again.")
+                        .setMessage("This does not stop the process. Check running processes before repeating the operation.")
                         .setNegativeButton("Keep waiting", null).setPositiveButton("Stop tracking", (confirmation, which) ->
                                 JobStore.finish(this, job.optString("id"), "", "", null,
-                                        "Tracking stopped by user. Native process state is unknown; it may still be running in Termux.", false)).show());
+                                        "Tracking stopped by user. Process state is unknown; it may still be running.", false)).show());
         dialog.show();
     }
     @Override public void onRequestPermissionsResult(int request, String[] permissions, int[] grants) {

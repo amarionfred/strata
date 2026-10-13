@@ -67,7 +67,7 @@ public final class PanelService extends Service {
         panel.setBackgroundColor(palette.color("background"));
         add(expanded ? "Close" : "›_", () -> { expanded = !expanded; redraw(); });
         if (!expanded) return;
-        for (String tab : new String[]{"Home", "Terminal", "Files", "Themes", "Controls", "Inbox"}) {
+        for (String tab : new String[]{"Home", "System", "Terminal", "Files", "Themes", "Controls", "Inbox"}) {
             add(tab, () -> {
                 if (!getSystemService(KeyguardManager.class).isKeyguardLocked())
                     startActivity(new Intent(this, MainActivity.class).putExtra("tab", tab)

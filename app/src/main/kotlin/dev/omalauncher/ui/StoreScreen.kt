@@ -397,6 +397,7 @@ private fun Detail(
         val size = e.size?.let { " · ${it.first}x${it.second}" } ?: ""
         BasicText("${e.category ?: OTHER} · ${e.author} · v${e.version} · ${e.license}$size", style = Mono.copy(color = Palette.muted, fontSize = TextSize.Small))
         BasicText(e.description, style = Mono.copy(fontSize = TextSize.Body))
+        BasicText("Store widgets are executable code. Only install authors you trust: commands and network requests can access your files and permitted Android data. Reviews are not a sandbox, and later file edits can change behavior.", style = Mono.copy(color = Palette.red, fontSize = TextSize.Small))
         Spacer(Modifier.height(4.dp))
         when {
             busy != null -> BasicText(busy, style = Mono.copy(color = Palette.accent))

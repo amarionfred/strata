@@ -153,13 +153,13 @@ private fun DesktopScreen(
         remember(runtime, state, context) {
             AppHandlers(
                 launch = ::launch,
-                // Pins to the page that's showing; the panel closes so the new tile is visible.
+                // Keep the panel open so several apps can be pinned in one visit.
                 pin = { hit ->
                     when (hit) {
                         is AppHit.Linux -> runtime.widgets.shortcuts.addLinux(hit.app, state.currentPage)
                         is AppHit.Android -> if (!hit.app.isPrivate) runtime.widgets.shortcuts.addAndroid(hit.app, state.currentPage)
                     }
-                    state.close()
+                    android.widget.Toast.makeText(context, "added to home", android.widget.Toast.LENGTH_SHORT).show()
                 },
                 info = { app ->
                     state.closeNow()

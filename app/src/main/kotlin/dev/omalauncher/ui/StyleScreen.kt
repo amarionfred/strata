@@ -96,13 +96,15 @@ fun StyleScreen(
                 },
                 onRemove = { removing = it },
             )
-            store.current?.let { BackgroundSection(store, it) }
+            store.current?.let { BackgroundSection(store, it, runtime.style) }
             // Style choices don't depend on a theme, so they're offered before themes are downloaded too.
             Heading("home screen")
             val style = runtime.style
             Flag("icons", "monochrome", "colored", style, Style.MONOCHROME_ICONS)
             Flag("home apps", "boxed", "icon only", style, Style.APP_TILES)
             Flag("recent apps", "shown", "hidden", style, Style.RECENT_APPS)
+            Flag("keyboard", "opens with apps", "on tap", style, Style.DRAWER_KEYBOARD)
+            Flag("drawer", "all apps", "not on home", style, Style.HOME_APPS_IN_DRAWER)
             NumberOption("corners", Corners.entries.map { it.label to it.scale.toDouble() }, Style.CORNER_SCALE, style)
             // Like Hyprland's gaps_in, gaps_out and border_size; the colors are in style.toml.
             Heading("widgets")
@@ -206,6 +208,7 @@ private fun ThemeSection(
 private fun BackgroundSection(
     store: ThemeStore,
     theme: OmarchyTheme,
+    style: StyleStore,
 ) {
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
@@ -215,6 +218,17 @@ private fun BackgroundSection(
         if (uri != null) scope.launch { store.addBackground(uri) }
     }
     Heading("background")
+    Flag("system & lock", "sync on", "sync off", style, Style.STATIC_WALLPAPER)
+    var applying by remember { mutableStateOf(false) }
+    if (!store.liveWallpaperActive && store.background != null) {
+        BracketAction(if (applying) "applying…" else "apply current image to system & lock", Palette.accent) {
+            if (!applying) scope.launch {
+                applying = true
+                try { store.applyStaticWallpaper(store.background) } finally { applying = false }
+            }
+        }
+    }
+    store.wallpaperResult?.let { OptionHint(it.message) }
     LazyRow(Modifier.bleed(PanelPadding), contentPadding = PaddingValues(horizontal = PanelPadding), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         items(backgrounds, key = { it.path }) { file ->
             Thumbnail(

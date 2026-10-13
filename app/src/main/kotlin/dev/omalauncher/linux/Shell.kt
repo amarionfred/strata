@@ -62,7 +62,7 @@ fun Proot.run(
     script: String,
     onLine: (String) -> Unit = {},
 ): Int {
-    val process = process(script).start()
+    val process = start(script)
     process.inputStream.bufferedReader().forEachLine(onLine)
     return process.waitFor()
 }

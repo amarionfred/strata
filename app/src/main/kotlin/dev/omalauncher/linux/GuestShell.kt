@@ -89,7 +89,7 @@ class GuestShell(
 
     private fun ensureStarted() {
         if (process?.isAlive == true) return
-        val p = proot.process("exec bash --noprofile --norc").start()
+        val p = proot.start("exec bash --noprofile --norc")
         process = p
         stdin = p.outputStream.bufferedWriter()
         stdout = p.inputStream.bufferedReader()

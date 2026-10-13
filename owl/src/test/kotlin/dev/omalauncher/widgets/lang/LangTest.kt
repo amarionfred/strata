@@ -7,6 +7,17 @@ import org.junit.Assert.fail
 import org.junit.Test
 
 class LangTest {
+    @Test fun dateNamesFollowLocaleChangesWithoutRestarting() {
+        val before = java.util.Locale.getDefault()
+        try {
+            java.util.Locale.setDefault(java.util.Locale.US)
+            assertEquals("January", text("fmtTime(86400, \"MMMM\")"))
+            java.util.Locale.setDefault(java.util.Locale.FRANCE)
+            assertEquals("janvier", text("fmtTime(86400, \"MMMM\")"))
+            java.util.Locale.setDefault(java.util.Locale.US)
+            assertEquals("January", text("fmtTime(86400, \"MMMM\")"))
+        } finally { java.util.Locale.setDefault(before) }
+    }
     /** Just enough runtime for tests: states start at their initial value, lets evaluate on read. */
     private class TestHost(
         val program: Program?,

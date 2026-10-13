@@ -77,3 +77,8 @@ dependencies {
     // android.jar only has stubs of org.json.
     testImplementation(libs.org.json)
 }
+
+// Tests compile bundled widgets and execute the sandbox-refusal script.
+tasks.withType<org.gradle.api.tasks.testing.Test>().configureEach {
+    inputs.dir(layout.projectDirectory.dir("src/main/assets"))
+}

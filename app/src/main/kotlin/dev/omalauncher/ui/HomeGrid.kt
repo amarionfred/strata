@@ -639,7 +639,8 @@ internal fun HomeGrid(
                 Row(Modifier.fillMaxSize()) {
                     for (page in pagesAt(slot, pages, grid)) {
                         Box(Modifier.width(with(density) { grid.width.toDp() }).fillMaxHeight()) {
-                            TiledPage(page, itemsOn(page), layout, grid, arrange, selected, render, actions, onNoRoom)
+                            TiledPage(page, itemsOn(page), layout, grid, arrange, selected, render, actions, onNoRoom,
+                                homeEmpty = pages.all { itemsOn(it).isEmpty() })
                         }
                     }
                 }
@@ -723,6 +724,7 @@ private fun TiledPage(
     render: @Composable (HomeItem, Modifier, Boolean) -> Unit,
     actions: @Composable (HomeItem) -> Unit,
     onNoRoom: (HomeItem) -> Unit,
+    homeEmpty: Boolean,
 ) {
     val density = LocalDensity.current
     val carried = arrange.carry?.item?.key
@@ -747,7 +749,7 @@ private fun TiledPage(
                 }
             }
         }
-        if (items.none { it.key != carried }) {
+        if (items.none { it.key != carried } && (selected != null || carried != null || homeEmpty)) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 BasicText(
                     if (carried != null) "drop here" else "no widgets on this page · long-press for a new one",

@@ -3,6 +3,9 @@ package dev.omalauncher.ui
 import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Build
+import android.content.Intent
+import android.net.Uri
+import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -43,6 +46,10 @@ import java.nio.file.Path
 import java.nio.file.SimpleFileVisitor
 import java.nio.file.attribute.BasicFileAttributes
 
+// Request local network access only on Android 17+, where the permission exists.
+internal fun needsLocalNetworkPermission(sdkInt: Int, granted: Boolean): Boolean =
+    sdkInt >= Build.VERSION_CODES.CINNAMON_BUN && !granted
+
 /**
  * Everything about the optional Linux system in one place: what it adds and
  * an install button, the install's progress, or, once installed, its size
@@ -68,22 +75,31 @@ fun LinuxScreen(
 }
 
 /**
- * Starts the Linux install and asks (Android 13+) to post notifications: the foreground
- * service's notification shows the install's progress and that Linux is running.
- * The install doesn't wait for the answer, which may never come back: on the welcome
- * screen, becoming the home app moves home to a new task, away from the dialog.
+ * Starts the Linux install and asks for the permissions Linux needs: notifications
+ * (Android 13+) for the session foreground service, and local network (target SDK 37+)
+ * so Arch and widgets can reach LAN hosts. The install doesn't wait for the answers.
  */
 @Composable
 fun rememberLinuxInstall(runtime: Runtime): (List<String>) -> Unit {
     val context = LocalContext.current
-    val ask = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {}
+    val ask = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {}
     return { bins ->
         runtime.installLinux(AGENTS.filter { it.bin in bins })
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
-            context.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
-        ) {
-            ask.launch(Manifest.permission.POST_NOTIFICATIONS)
+        val need = buildList {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+                context.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+            ) {
+                add(Manifest.permission.POST_NOTIFICATIONS)
+            }
+            if (needsLocalNetworkPermission(
+                    sdkInt = Build.VERSION.SDK_INT,
+                    granted = context.checkSelfPermission(Manifest.permission.ACCESS_LOCAL_NETWORK) == PackageManager.PERMISSION_GRANTED,
+                )
+            ) {
+                add(Manifest.permission.ACCESS_LOCAL_NETWORK)
+            }
         }
+        if (need.isNotEmpty()) ask.launch(need.toTypedArray())
     }
 }
 
@@ -108,6 +124,8 @@ private fun InstallOffer(runtime: Runtime) {
 
 @Composable
 private fun Installed(runtime: Runtime) {
+    val context = LocalContext.current
+    val askNetwork = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {}
     var size by remember { mutableStateOf<Long?>(null) }
     LaunchedEffect(Unit) { size = withContext(Dispatchers.IO) { diskUsage(runtime.proot.rootfs) } }
     var confirm by remember { mutableStateOf(false) }
@@ -128,6 +146,19 @@ private fun Installed(runtime: Runtime) {
         GpuRow(runtime)
     }
     Spacer(Modifier.height(16.dp))
+    when {
+        runtime.linuxStopping -> BasicText("stopping Linux after active package operations finish…", style = Mono.copy(color = Palette.muted))
+        runtime.linuxStopped -> BracketAction("resume linux", Palette.accent) { runtime.resumeLinux() }
+        else -> BracketAction("stop linux", Palette.accent) { runtime.stopLinux() }
+    }
+    BasicText("Stopping ends guest commands and windows. Your installed packages and home files are kept.", style = Mono.copy(color = Palette.muted, fontSize = TextSize.Small))
+    Spacer(Modifier.height(16.dp))
+    if (Build.VERSION.SDK_INT >= 37) {
+        BracketAction("allow local network", Palette.accent) { askNetwork.launch(Manifest.permission.ACCESS_LOCAL_NETWORK) }
+        BasicText("LAN access is separate from internet access on Android 17. If denied permanently, enable it in app permissions.", style = Mono.copy(color = Palette.muted, fontSize = TextSize.Small))
+        BracketAction("app permissions", Palette.accent) { context.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:" + context.packageName))) }
+        Spacer(Modifier.height(16.dp))
+    }
     if (!confirm) {
         BracketAction("remove linux", Palette.red) { confirm = true }
     } else {

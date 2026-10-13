@@ -6,6 +6,21 @@ Dates are when the build was uploaded to Play.
 
 ## Fork — unreleased
 
+- Native preview 0.3: profile-aware app catalog, accent search, Android pin
+  shortcuts, private-space tab on Android 15+, explicit Android wallpaper
+  application, and notification refresh/open/privacy fixes. This APK continues
+  to use Termux and optional Shizuku; its UI is separate from the original grid.
+- Original launcher: adapt drawer preferences and pinning from #32, wallpaper
+  sync from #77, IME changes from #38, work-profile fixes from #51/#76, LAN
+  permission from #47 and weather recovery from #59; integrate #66 and #72.
+- Stop/resume the original Linux service while keeping its files. Exited
+  terminal tiles no longer restart merely because their page reappears.
+- Keep ongoing navigation notifications; refresh app labels/date names after
+  locale changes; keep deliberately empty home pages clear outside arranging.
+- Reject Bubblewrap requests when isolation is unavailable instead of silently
+  running their payload. See SECURITY.md for compatibility and trust limits.
+- Pin CI action revisions, add native-preview checks and contribution templates.
+  Full dispositions and physical checks still needed: docs/UPSTREAM_AUDIT.md.
 - Linux touch input forwards simultaneous contacts with distinct IDs, batched
   frames and cancellation when Android cancels a gesture or its surface closes.
 - Dragging a widget previews neighbour movement while preserving widget sizes.

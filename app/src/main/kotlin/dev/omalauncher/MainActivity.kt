@@ -86,6 +86,11 @@ class MainActivity : ComponentActivity() {
         state.shared = link
     }
 
+    override fun onPause() {
+        runtime.androidApps.hidePrivateNow()
+        super.onPause()
+    }
+
     override fun onResume() {
         super.onResume()
         runtime.androidApps.refresh()

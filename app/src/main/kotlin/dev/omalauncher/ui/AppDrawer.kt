@@ -9,6 +9,9 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
@@ -74,6 +77,7 @@ import androidx.compose.ui.window.PopupPositionProvider
 import androidx.compose.ui.window.PopupProperties
 import androidx.compose.ui.graphics.ColorFilter
 import dev.omalauncher.AndroidApp
+import dev.omalauncher.androidAppKey
 import androidx.compose.runtime.collectAsState
 import dev.omalauncher.Runtime
 import dev.omalauncher.linux.LinuxState
@@ -344,12 +348,16 @@ internal fun AppPanel(
     val apps = runtime.androidApps
     // With a work profile, the empty bar lists one profile's apps at a time, as stock drawers' tabs do.
     val (tabs, tab) = shownTabs(runtime, state)
+    val hidden = if (LauncherStyle.homeAppsInDrawer) emptySet() else runtime.widgets.shortcuts.items.mapNotNullTo(HashSet()) { shortcut ->
+        shortcut.component?.let { "a:" + androidAppKey(it, shortcut.profile) } ?: shortcut.linux?.let { AppHit.Linux(it).key }
+    }
 
     val screenHeight = with(LocalDensity.current) { LocalConfiguration.current.screenHeightDp.dp.toPx() }
     // Pulling down past the end of the list drags the panel closed, like stock drawers.
     val pullToClose =
         remember(state, screenHeight) {
             object : NestedScrollConnection {
+                var fromEnd = false
                 override fun onPreScroll(
                     available: Offset,
                     source: NestedScrollSource,
@@ -365,7 +373,7 @@ internal fun AppPanel(
                     available: Offset,
                     source: NestedScrollSource,
                 ): Offset {
-                    if (source != NestedScrollSource.UserInput || available.y <= 0f) return Offset.Zero
+                    if (source != NestedScrollSource.UserInput || available.y <= 0f || !fromEnd) return Offset.Zero
                     state.dragBy(-available.y / screenHeight)
                     return Offset(0f, available.y)
                 }
@@ -442,7 +450,12 @@ internal fun AppPanel(
                             LazyColumn(
                                 state = listState,
                                 reverseLayout = shown == null,
-                                modifier = Modifier.fillMaxWidth().nestedScroll(pullToClose),
+                                modifier = Modifier.fillMaxWidth().pointerInput(listState, shown) {
+                                    awaitEachGesture {
+                                        awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
+                                        pullToClose.fromEnd = if (shown == null) !listState.canScrollForward else !listState.canScrollBackward
+                                    }
+                                }.nestedScroll(pullToClose),
                                 contentPadding = PaddingValues(top = 8.dp, bottom = 4.dp),
                             ) {
                                 fun row(
@@ -481,14 +494,14 @@ internal fun AppPanel(
                                         val paused = apps.workProfiles.any { apps.paused(it) }
                                         section(
                                             if (paused) "work apps paused" else "work apps",
-                                            apps.apps.filter { it.work }.map { AppHit.Android(it) },
+                                            apps.apps.filter { it.work }.map { AppHit.Android(it) }.filter { it.key !in hidden },
                                             listOf((if (paused) "turn on" else "pause") to { apps.pauseWork(!paused) }),
                                         )
                                     }
                                     // Clones too, as stock drawers list them: second copies of the owner's apps.
                                     DrawerTab.Personal -> {
                                         if (linuxState == LinuxState.Installed) {
-                                            section("linux", runtime.linuxApps.map { AppHit.Linux(it) })
+                                            section("linux", runtime.linuxApps.map { AppHit.Linux(it) }.filter { it.key !in hidden })
                                         } else {
                                             // Linux apps would be listed here; without Linux, one quiet offer instead.
                                             item(key = "linux-offer") {
@@ -501,7 +514,7 @@ internal fun AppPanel(
                                                 }
                                             }
                                         }
-                                        section("android", apps.apps.filter { !it.work && !it.isPrivate }.map { AppHit.Android(it) })
+                                        section("android", apps.apps.filter { !it.work && !it.isPrivate }.map { AppHit.Android(it) }.filter { it.key !in hidden })
                                     }
                                 }
                             }

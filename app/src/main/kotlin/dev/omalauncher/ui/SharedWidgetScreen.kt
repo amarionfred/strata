@@ -77,7 +77,7 @@ fun SharedWidgetScreen(
             }
             Spacer(Modifier.height(4.dp))
             BasicText(
-                "Only add it if you trust whoever sent it. It runs the commands below in Arch as you, with your files and the network.",
+                "Only add it if you trust whoever sent it. This is executable code with access to your guest files, network and permitted Android data. Risk hints and agent reviews are not a sandbox; a clean review does not prove safety. File edits can change what runs.",
                 Modifier.fillMaxWidth().background(Palette.red.copy(alpha = 0.12f)).padding(8.dp),
                 style = Mono.copy(color = Palette.red, fontSize = TextSize.Small),
             )

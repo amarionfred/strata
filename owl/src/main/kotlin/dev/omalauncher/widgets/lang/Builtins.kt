@@ -160,13 +160,14 @@ object Builtins {
 
     private fun regex(p: String) = synchronized(regexCache) { regexCache.getOrPut(p) { Regex(p) } }
 
-    private val timeFormats = HashMap<String, DateTimeFormatter>()
+    private val timeFormats = HashMap<Pair<Locale, String>, DateTimeFormatter>()
 
     private fun fmtTime(
         seconds: Double,
         pattern: String,
     ): String {
-        val f = synchronized(timeFormats) { timeFormats.getOrPut(pattern) { DateTimeFormatter.ofPattern(pattern, Locale.getDefault()) } }
+        val locale = Locale.getDefault()
+        val f = synchronized(timeFormats) { timeFormats.getOrPut(locale to pattern) { DateTimeFormatter.ofPattern(pattern, locale) } }
         return f.format(Instant.ofEpochMilli((seconds * 1000).toLong()).atZone(ZoneId.systemDefault()))
     }
 

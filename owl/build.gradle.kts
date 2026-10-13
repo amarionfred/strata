@@ -24,6 +24,10 @@ dependencies {
     testImplementation(libs.junit)
 }
 
+tasks.withType<Test>().configureEach {
+    inputs.dir(rootProject.layout.projectDirectory.dir("app/src/main/assets/widgets"))
+}
+
 /** A single runnable jar (`java -jar owl.jar check ...`) for CI. */
 tasks.register<Jar>("owlJar") {
     archiveFileName = "owl.jar"

@@ -9,6 +9,10 @@ import java.io.File
 class Proot(
     private val context: Context,
 ) {
+    private val processGate = ProcessGate()
+    fun start(script: String): Process = processGate.start { process(script).start() }
+    fun stop() = processGate.stop { killAll() }
+    fun resume() = processGate.resume()
     private val nativeDir = File(context.applicationInfo.nativeLibraryDir)
     val filesDir: File = context.filesDir
     val rootfs = File(filesDir, "arch")
@@ -180,7 +184,7 @@ class Proot(
     }
 
     /** A guest `sh -c [script]`, stderr merged into stdout. Needs [prepare] to have run. */
-    fun process(script: String): ProcessBuilder =
+    private fun process(script: String): ProcessBuilder =
         ProcessBuilder(command(script)).apply {
             environment().apply {
                 clear()

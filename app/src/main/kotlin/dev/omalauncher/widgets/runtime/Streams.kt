@@ -73,7 +73,7 @@ class Streams(
 
     private fun open(command: String): SharedFlow<String?> =
         callbackFlow<String?> {
-            val process = proot.process("exec bash -c " + shellQuote(command)).start()
+            val process = proot.start("exec bash -c " + shellQuote(command))
             launch(Dispatchers.IO) {
                 try {
                     process.inputStream.bufferedReader().useLines { lines -> lines.forEach { trySend(it) } }

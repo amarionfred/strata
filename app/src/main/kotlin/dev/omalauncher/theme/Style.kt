@@ -137,9 +137,12 @@ class Style(
 
         val THEME = Setting.Name("theme", "The Omarchy theme, by its directory name in ~/.local/share/omarchy/themes or ~/.config/omarchy/themes (yours win).")
         val BACKGROUND = Setting.Name("background", "A file name from the theme's backgrounds/ or ~/.config/omarchy/backgrounds/<theme>/. Unset: the theme's first.")
+        val STATIC_WALLPAPER = Setting.Flag("wallpaper.sync-static", false, "Also apply a selected background to Android's system and lock wallpaper. Active live wallpapers are preserved.")
 
         val APP_TILES = Setting.Flag("home.app-tiles", true, "Apps on home in a tile like a widget; false draws bare icons on the wallpaper.")
         val RECENT_APPS = Setting.Flag("home.recent-apps", true, "The strip of recently used apps above the prompt bar.")
+        val DRAWER_KEYBOARD = Setting.Flag("drawer.keyboard", true, "Open the keyboard with the drawer; false waits for a tap on the search field.")
+        val HOME_APPS_IN_DRAWER = Setting.Flag("drawer.home-apps", true, "Include apps pinned on home in the drawer. Search always includes them.")
 
         val GAPS_IN = Setting.Number("widgets.gaps-in", 6.0, 0.0..24.0, "Space in dp between two of home's widgets (all of it, unlike Hyprland's gaps_in, which each window has on its side).")
         val GAPS_OUT = Setting.Number("widgets.gaps-out", 6.0, 0.0..48.0, "Space in dp from home's widgets, the strip and the prompt bar to the screen's edges.")
@@ -197,7 +200,7 @@ object StyleFile {
 
     val ALL: List<Setting<*>> =
         with(Style) {
-            listOf(THEME, BACKGROUND, APP_TILES, RECENT_APPS, GAPS_IN, GAPS_OUT, TILE_BORDER_WIDTH, TILE_BORDER, TILE_BORDER_FOCUSED) +
+            listOf(THEME, BACKGROUND, STATIC_WALLPAPER, APP_TILES, RECENT_APPS, DRAWER_KEYBOARD, HOME_APPS_IN_DRAWER, GAPS_IN, GAPS_OUT, TILE_BORDER_WIDTH, TILE_BORDER, TILE_BORDER_FOCUSED) +
                 listOf(SCREEN_GAPS_OUT, SCREEN_BORDER_WIDTH, MONOCHROME_ICONS, CORNER_SCALE) +
                 STATUS_BAR.all + NAVIGATION_BAR.all + listOf(TERMINAL_FONT, TERMINAL_TEXT)
         }

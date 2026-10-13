@@ -33,12 +33,13 @@ class Notifications(
     /** App labels by package; the lookup is a binder call. */
     private val labels = HashMap<String, String>()
 
-    /** What a widget lists: not ongoing ones (music, downloads, the launcher's own service) or group headers. */
+    /** Keep navigation, downloads and other ongoing items; hide our service and duplicate group headers. */
     private fun shown(): List<StatusBarNotification> {
         val listener = MediaListener.connected ?: return emptyList()
         val all = runCatching { listener.activeNotifications }.getOrNull().orEmpty()
-        val hidden = Notification.FLAG_ONGOING_EVENT or Notification.FLAG_FOREGROUND_SERVICE or Notification.FLAG_GROUP_SUMMARY
-        return all.filter { include(it.user) && it.notification.flags and hidden == 0 && (title(it) != null || text(it) != null) }.sortedByDescending { it.postTime }
+        return all.filter { include(it.user) && it.packageName != context.packageName &&
+            it.notification.flags and Notification.FLAG_GROUP_SUMMARY == 0 && (title(it) != null || text(it) != null)
+        }.sortedByDescending { it.postTime }
     }
 
     private fun title(sbn: StatusBarNotification) = sbn.notification.extras.getCharSequence(Notification.EXTRA_TITLE)?.toString()?.takeIf { it.isNotBlank() }
@@ -46,7 +47,7 @@ class Notifications(
     private fun text(sbn: StatusBarNotification) = sbn.notification.extras.getCharSequence(Notification.EXTRA_TEXT)?.toString()?.takeIf { it.isNotBlank() }
 
     private fun label(pkg: String) =
-        labels.getOrPut(pkg) {
+        labels.getOrPut(java.util.Locale.getDefault().toLanguageTag() + ":" + pkg) {
             runCatching {
                 val pm = context.packageManager
                 pm.getApplicationLabel(pm.getApplicationInfo(pkg, 0)).toString()

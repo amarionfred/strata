@@ -61,6 +61,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.sync.withLock
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.concurrent.thread
 
@@ -137,6 +138,10 @@ class Runtime(
 
     /** The Linux install and removal; one at a time. */
     private var linuxJob: Job? = null
+    var linuxStopped by mutableStateOf(prefs.getBoolean("linux_stopped", false))
+        private set
+    var linuxStopping by mutableStateOf(false)
+        private set
 
     /** Set when something that needs Linux was asked for without it; the home screen opens the install sheet and clears it. */
     var linuxWanted by mutableStateOf(false)
@@ -153,6 +158,12 @@ class Runtime(
         // foot.ini follows the terminal settings, from the Style menu or the file alike.
         scope.launch {
             snapshotFlow { style.style[Style.TERMINAL_FONT] to style.style[Style.TERMINAL_TEXT] }.drop(1).collect { terminalFont.write() }
+        }
+        androidApps.onReload = {
+            for (shortcut in widgets.shortcuts.items.filter { s -> s.profile?.let { androidApps.deleted(it) } == true }) {
+                widgets.shortcuts.remove(shortcut.key)
+                widgets.layout.remove(shortcut.key)
+            }
         }
         androidApps.start()
         // Omarchy's Super bindings inside Linux windows; the home screen handles its own (see MainActivity).
@@ -203,7 +214,9 @@ class Runtime(
             widgets.start()
             // On the first-run screen the download is the screen's job, with progress.
             if (launcherReady) scope.launch { themes.ensureRelease() }
-            if (bootstrap.wanted) runLinux { bootstrap.run() } else bootstrap.run()
+            if (linuxStopped && bootstrap.loadStopped()) {
+                withContext(Dispatchers.IO) { proot.stop() }
+            } else if (bootstrap.wanted) runLinux { bootstrap.run() } else bootstrap.run()
         }
     }
 
@@ -223,10 +236,13 @@ class Runtime(
     /** Runs [work] with the foreground service up, so it goes on outside the app; then starts Linux if it's installed. */
     private fun runLinux(work: suspend () -> Unit) {
         if (linuxJob?.isActive == true) return
+        linuxStopped = false
+        prefs.edit().putBoolean("linux_stopped", false).apply()
         linuxJob =
             scope.launch {
                 setService(true)
                 withContext(Dispatchers.IO) {
+                    proot.resume()
                     if (!prepared) {
                         proot.prepare()
                         prepared = true
@@ -236,6 +252,31 @@ class Runtime(
                 if (bootstrap.isInstalled) onLinuxReady() else setService(false)
             }
     }
+
+    /** Stop the guest and its service while retaining its home, packages and configuration. */
+    fun stopLinux() {
+        if (!bootstrap.isInstalled || linuxJob?.isActive == true || linuxStopped) return
+        linuxStopping = true
+        linuxJob = scope.launch {
+            try {
+                // Let launcher-managed package transactions finish before terminating their processes.
+                pacman.lock.withLock {
+                    linuxStopped = true
+                    prefs.edit().putBoolean("linux_stopped", true).apply()
+                    linux = false
+                    widgets.linuxChanged(false)
+                    terminals.deactivate()
+                    audio.stop()
+                    withContext(Dispatchers.IO) { proot.stop() }
+                    proot.procShim.setActive(false)
+                    linuxApps.clear(); linuxIcons.clear(); linuxMasks.clear()
+                    setService(false)
+                }
+            } finally { linuxStopping = false }
+        }
+    }
+
+    fun resumeLinux() { if (bootstrap.isInstalled && linuxStopped) retryLinux() }
 
     /**
      * Deletes Linux: its apps, agents, packages and home. Themes, widgets and
@@ -301,6 +342,7 @@ class Runtime(
             terminalFont.write()
         }
         linux = true
+        proot.procShim.setActive(screens > 0)
         // The recent apps strip on home lists Linux apps before the app list is ever opened.
         scope.launch { refreshApps() }
         // Themes picked without Linux are written into the guest now.
@@ -331,6 +373,7 @@ class Runtime(
 
     /** Runs every pending update (packages and agents); the drawer then lists what changed. */
     fun updateSystem() {
+        if (!linux) return
         scope.launch {
             updates.updateAll()
             refreshApps()
@@ -376,7 +419,7 @@ class Runtime(
     private var screens = 0
 
     fun screenStarted() {
-        if (screens++ == 0) proot.procShim.setActive(true)
+        if (screens++ == 0 && !linuxStopped) proot.procShim.setActive(true)
         // Only checks when the last check is hours old; see SystemUpdates.
         if (linux) scope.launch { updates.check() }
     }

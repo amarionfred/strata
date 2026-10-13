@@ -85,6 +85,18 @@ class ThemeStore(
     /** Called when the guest configs depending on the theme changed; see [managed]. */
     private val onConfigChanged: () -> Unit,
 ) {
+    private val wallpaperWrites = Mutex()
+    var wallpaperResult by mutableStateOf<dev.omalauncher.platform.WallpaperOutcome?>(null)
+        private set
+
+    suspend fun applyStaticWallpaper(file: File?) = wallpaperWrites.withLock {
+        val result = withContext(Dispatchers.IO) {
+            if (file != background) dev.omalauncher.platform.WallpaperOutcome.INVALID_IMAGE
+            else dev.omalauncher.platform.StaticWallpaper.apply(context, file)
+        }
+        wallpaperResult = result
+        result
+    }
     private val release = OmarchyRelease(LauncherData.omarchyDir(context))
     private val dirs = themeDirs(context)
     private val guest = GuestThemeConfig(proot, release.dir)
@@ -440,6 +452,7 @@ class ThemeStore(
         // With the live wallpaper active, the launcher is transparent and needs no copy of its own.
         wallpaper = if (liveWallpaperActive) null else decodeWallpaper(file)
         if (file != null && isLinux()) withContext(Dispatchers.IO) { guest.linkBackground(file) }
+        if (file != null && style.style[Style.STATIC_WALLPAPER]) applyStaticWallpaper(file)
         changeListeners.forEach { it() }
     }
 

@@ -128,6 +128,7 @@ class AndroidAppCatalog(
     fun updatePrivateShown(shown: Boolean) {
         privateShown = shown
         prefs.edit().putBoolean(PRIVATE_SHOWN, shown).apply()
+        refresh()
     }
 
     private val launcherApps = context.getSystemService(LauncherApps::class.java)
@@ -138,6 +139,9 @@ class AndroidAppCatalog(
     private val iconDispatcher = Dispatchers.IO.limitedParallelism(4)
     private var loading: Job? = null
     private var generation = 0
+    private val removedProfiles = java.util.concurrent.ConcurrentHashMap.newKeySet<Long>()
+    private val knownProfileSerials = java.util.concurrent.ConcurrentHashMap<UserHandle, Long>()
+    var onReload: () -> Unit = {}
     private var lockGate by mutableStateOf(PrivateLockGate())
 
     /** Icon edge in px: the drawer's 52dp icon at this screen's density. */
@@ -172,12 +176,21 @@ class AndroidAppCatalog(
                     addAction(Intent.ACTION_PROFILE_UNAVAILABLE)
                 }
             }
+        profileChanged.addAction(Intent.ACTION_LOCALE_CHANGED)
         val receiver =
             object : BroadcastReceiver() {
                 override fun onReceive(
                     context: Context,
                     intent: Intent,
                 ) {
+                    if (intent.action == Intent.ACTION_LOCALE_CHANGED) { icons.clear(); masks.clear() }
+                    if (intent.action == Intent.ACTION_MANAGED_PROFILE_REMOVED || intent.action == "android.intent.action.PROFILE_REMOVED") {
+                        @Suppress("DEPRECATION")
+                        val removed = intent.getParcelableExtra<UserHandle>(Intent.EXTRA_USER)
+                        val serial = removed?.let { knownProfileSerials.remove(it) }
+                            ?: runCatching { removed?.let(userManager::getSerialNumberForUser) }.getOrNull()?.takeIf { it >= 0 }
+                        serial?.let { removedProfiles += it }
+                    }
                     // A lock broadcast must remove already rendered private labels and icons now.
                     invalidatePrivate()
                     reload()
@@ -193,13 +206,21 @@ class AndroidAppCatalog(
         reload()
     }
 
+    fun hidePrivateNow() = invalidatePrivate()
+
+    private fun homeRole(): Boolean = runCatching {
+        context.getSystemService(android.app.role.RoleManager::class.java).isRoleHeld(android.app.role.RoleManager.ROLE_HOME)
+    }.getOrDefault(false)
+
     /**
      * Opens [app] in its profile. One in a paused work profile asks to turn work apps back on
      * instead (the system may ask for the work PIN first); a second tap then opens it.
      */
     fun open(app: AndroidApp) {
         if (!accessible(app)) return
-        open(app.component, app.user)
+        val user = userFor(app.profile) ?: return
+        if (!accessible(user)) return
+        open(app.component, user)
     }
 
     /** Opens a pinned app; [profile] as in [AndroidApp.profile]. */
@@ -207,7 +228,7 @@ class AndroidAppCatalog(
         component: ComponentName,
         profile: Long?,
     ) {
-        val user = if (profile == null) Process.myUserHandle() else userFor(profile)
+        val user = userFor(profile)
         if (user == null) {
             Log.w(TAG, "cannot open $component: its profile $profile is gone")
             return
@@ -269,32 +290,34 @@ class AndroidAppCatalog(
     /** The system's App info page, as stock launchers open it. */
     fun openInfo(app: AndroidApp) {
         if (!accessible(app)) return
-        runCatching { launcherApps.startAppDetailsActivity(app.component, app.user, null, null) }
+        val user = userFor(app.profile) ?: return
+        runCatching { launcherApps.startAppDetailsActivity(app.component, user, null, null) }
             .onFailure { Log.w(TAG, "cannot open info for ${app.component}", it) }
     }
 
     /** Asks the system to uninstall; the list updates through the package callback. */
     fun uninstall(app: AndroidApp) {
         if (!accessible(app)) return
+        val user = userFor(app.profile) ?: return
         runCatching {
             context.startActivity(
                 Intent(Intent.ACTION_DELETE, Uri.parse("package:" + app.component.packageName))
-                    .putExtra(Intent.EXTRA_USER, app.user)
+                    .putExtra(Intent.EXTRA_USER, user)
                     .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
             )
         }.onFailure { Log.w(TAG, "cannot uninstall ${app.component}", it) }
     }
 
-    fun canUsePrivate(app: AndroidApp) =
+    fun canUsePrivate(app: AndroidApp): Boolean =
         app.isPrivate && privateShown && app.profile in privateProfiles && !lockGate.blocks(app.profile) &&
-            apps.any { it.key == app.key && it.isPrivate } && accessible(app.user)
+            apps.any { it.key == app.key && it.isPrivate } && userFor(app.profile)?.let(::accessible) == true
 
-    private fun accessible(app: AndroidApp) = !app.isPrivate || canUsePrivate(app)
+    private fun accessible(app: AndroidApp): Boolean = !app.isPrivate || canUsePrivate(app)
 
     private fun accessible(user: UserHandle): Boolean {
         if (user == Process.myUserHandle()) return true
         return when (profileKind(user)) {
-            ProfileKind.Private -> privateShown && !quiet(user)
+            ProfileKind.Private -> homeRole() && privateShown && !quiet(user)
             null -> false
             else -> true
         }
@@ -307,14 +330,24 @@ class AndroidAppCatalog(
     fun outsidePrivate(profile: Long?): Boolean =
         profile == null || userFor(profile)?.let(::outsidePrivate) == true
 
-    private fun userFor(profile: Long): UserHandle? = runCatching { userManager.getUserForSerialNumber(profile) }.getOrNull()
+    private fun userFor(profile: Long?): UserHandle? = runCatching {
+        if (profile != null && profile in removedProfiles) return@runCatching null
+        val user = if (profile == null) Process.myUserHandle() else userManager.getUserForSerialNumber(profile)
+        user?.takeIf { sameAppProfile(profile, userManager.getSerialNumberForUser(it)) }
+    }.getOrNull()
+
+    // Only a removal event confirms deletion: role/visibility loss can also make a lookup return null.
+    // A stale saved shortcut is hidden by outsidePrivate(), without destroying its saved placement.
+    fun deleted(profile: Long) = profile in removedProfiles
 
     private fun quietState(user: UserHandle): Boolean? = runCatching { userManager.isQuietModeEnabled(user) }.getOrNull()
 
     private fun quiet(user: UserHandle): Boolean = quietState(user) != false
 
     private fun privateAvailable(app: AndroidApp): Boolean =
-        !lockGate.blocks(app.profile) && profileKind(app.user) == ProfileKind.Private && !quiet(app.user)
+        homeRole() && privateShown && !lockGate.blocks(app.profile) && userFor(app.profile)?.let {
+            profileKind(it) == ProfileKind.Private && !quiet(it)
+        } == true
 
     /** Purges private data before an unavailable-profile broadcast can be followed by another frame. */
     private fun invalidatePrivate() {
@@ -350,6 +383,7 @@ class AndroidAppCatalog(
                             .flatMap { user ->
                                 val profile = if (user == me) null else runCatching { userManager.getSerialNumberForUser(user) }.getOrNull()?.takeIf { it >= 0 }
                                 if (user != me && profile == null) return@flatMap emptyList()
+                                if (profile != null) knownProfileSerials[user] = profile
                                 val kind = if (profile == null) ProfileKind.Personal else profileKind(user)
                                 if (kind == null) return@flatMap emptyList()
                                 val clone = kind == ProfileKind.Clone
@@ -360,7 +394,7 @@ class AndroidAppCatalog(
                                 if (profile != null && clone) clones += profile
                                 if (profile != null && kind == ProfileKind.Work) works += profile
                                 if (profile != null && isPrivate) privates += profile
-                                if (isPrivate && (quietMode != false || lockGate.blocks(profile))) return@flatMap emptyList()
+                                if ((profile != null && profile in removedProfiles) || (isPrivate && (!homeRole() || !privateShown || quietMode != false || lockGate.blocks(profile)))) return@flatMap emptyList()
                                 // A profile can lock or disappear while resolving labels, too.
                                 runCatching {
                                     launcherApps.getActivityList(null, user)
@@ -387,6 +421,7 @@ class AndroidAppCatalog(
                 val present = list.mapTo(HashSet()) { it.key }
                 icons.keys.retainAll(present)
                 masks.keys.retainAll(present)
+                onReload()
                 for ((info, app) in visibleInfos) {
                     if (app.key in icons) continue
                     launch {
